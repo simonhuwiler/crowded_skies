@@ -1,19 +1,292 @@
-// LongLat-Aufteilung!
+/*
+
+https://www.northrivergeographic.com/qgis-points-along-line
+
+*/
+
+// LatLon-Aufteilung!
+const groundAltitude = 500
+var llNullPoint = new LatLon(46.2, 5.85);
+var llMittelpunkt = new LatLon(46.943366, 8.311583);
+var llLuzern = new LatLon(47.055046, 8.305300);
+
+var cities = [
+  {
+    "id": "luzern",
+    "img": "luzern.png",
+    "latlon": new LatLon(47.055046, 8.305300),
+  },
+  {
+    "id": "zurich",
+    "img": "zurich.png",
+    "latlon": new LatLon(47.372084, 8.540693),
+  },
+  {
+    "id": "winterthur",
+    "img": "winterthur.png",
+    "latlon": new LatLon(47.500399, 8.724567)
+  },
+  {
+    "id": "stgallen",
+    "img": "stgallen.png",
+    "latlon": new LatLon(47.421097, 9.375037)
+  },
+  {
+    "id": "konstanz",
+    "img": "konstanz.png",
+    "latlon": new LatLon(47.663340, 9.170435)
+  },
+  {
+    "id": "schaffhausen",
+    "img": "schaffhausen.png",
+    "latlon": new LatLon(47.692347, 8.635310)
+  },
+  {
+    "id": "bern",
+    "img": "bern.png",
+    "latlon": new LatLon(46.947311, 7.447716)
+  },
+  {
+    "id": "biel",
+    "img": "Biel",
+    "latlon": new LatLon(47.137394, 7.248539)
+  },
+  {
+    "id": "neuenburg",
+    "img": "neuenburg.png",
+    "latlon": new LatLon(46.992260, 6.910098)
+  },
+  {
+    "id": "yverdon-les-bains",
+    "img": "yverdon-les-bains.png",
+    "latlon": new LatLon(46.783100, 6.640909)
+  },
+  {
+    "id": "lausanne",
+    "img": "lausanne.png",
+    "latlon": new LatLon(46.518534, 6.628543)
+  },
+  {
+    "id": "genf",
+    "img": "genf.png",
+    "latlon": new LatLon(46.202770, 6.148037)
+  },
+  {
+    "id": "zermatt",
+    "img": "zermatt.png",
+    "latlon": new LatLon(46.018972, 7.748883)
+  },
+  {
+    "id": "visp",
+    "img": "visp.png",
+    "latlon": new LatLon(46.296203, 7.881271)
+  },
+  {
+    "id": "sion",
+    "img": "sion.png",
+    "latlon": new LatLon(46.233313, 7.359701)
+  },
+  {
+    "id": "chur",
+    "img": "chur.png",
+    "latlon": new LatLon(46.856793, 9.548603)
+  },
+  {
+    "id": "stmoritz",
+    "img": "stmoritz.png",
+    "latlon": new LatLon(46.488049, 9.834390)
+  },
+  {
+    "id": "davos",
+    "img": "davos.png",
+    "latlon": new LatLon(46.801325, 9.827914)
+  }
+]
+var renderer, scene, camera;
 
 $(document).ready( function() {
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+  $("#render").on("click", function() {
+    renderer.render( scene, camera );
+  });
+
+  console.log("== Mittelpunkt");
+  xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
+
+  console.log("== Luzern");
+  xzLuzern = latLon2XY(llNullPoint, llLuzern);
+
+  console.log(xzMittelpunkt, xzLuzern);
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color( 0xccd2ff );
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 300000);
   
-  var renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
 
-  var p1 = new LatLon(5.85, 46.2);
-  var p2 = new LatLon(7.4, 47);
-  //console.log(distance(p1, p2));
-  //console.log(bearingTo(p1, p2));
-  console.log(LonLat2XY(p1, p2));
+/*
+  var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+  var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+  var cube = new THREE.Mesh( geometry, material );
+  //scene.add( cube );
+
+  /*
+  var spriteMap = new THREE.TextureLoader().load( "mesh/blau.jpg" );
+  var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, color: 0xffcc00} );
+  var sprite = new THREE.Sprite( spriteMaterial );
+  sprite.scale.set(256, 256, 1);
+  sprite.visible = true;
+  */
+
+/*
+  var crateTexture = new THREE.TextureLoader().load( "mesh/blau.jpg", function(e) {
+    var crateMaterial = new THREE.SpriteMaterial( { map: e, side:THREE.DoubleSide, transparent: true, color: 0xffffff } );
+    var sprite2 = new THREE.Sprite( crateMaterial );
+    //sprite2.position.set( 0, 0, 0 );
+    sprite2.scale.set( 1, 1, 1.0 ); // imageWidth, imageHeight
+    scene.add( sprite2 );
+    renderer.render( scene, camera );
+
+  } );
+  */
+/*
+  var crateTexture = new THREE.TextureLoader().load( "mesh/blau.jpg");
+  console.log(crateTexture);
+  var crateMaterial = new THREE.SpriteMaterial( { map: crateTexture, side:THREE.DoubleSide, transparent: true, color: 0xffffff } );
+  var sprite2 = new THREE.Sprite( crateMaterial );
+  //sprite2.position.set( 0, 0, 0 );
+  sprite2.scale.set( 1, 1, 1.0 ); // imageWidth, imageHeight
+  scene.add( sprite2 );
+  renderer.render( scene, camera );
+*/
+
+
+  //camera.position.z = 5;
+  //camera.lookAt(sprite2.position);
+
+ // scene.add( sprite );
+
+
+
+  //Add Ground
+  var ground = new THREE.Mesh(
+    new THREE.PlaneBufferGeometry( km(500), km(500), 1, 1 ),
+    new THREE.MeshPhongMaterial( { color: 0xffffff } )
+  );
+  ground.rotation.x = - Math.PI / 2; // rotates X/Y to X/Z
+  ground.receiveShadow = true;
+  ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
+  scene.add( ground );
+
+  //Add Light
+  var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+  scene.add( light );
+
+  var textureLoader = new THREE.TextureLoader();
+  //Add Fix Points (Cities)
+  cities.forEach(function(e) {
+    //Create Geometry
+    e.geometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
+
+    //Create Mataerial
+    e.material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
+
+    //Calculate XZ
+    xzE = latLon2XY(llNullPoint, e.latlon);
+
+    //Create Mesh
+    
+    e.mesh = new THREE.Mesh( e.geometry, e.material );
+    e.mesh.position.set(xzE.x, groundAltitude + getHalfHeightOfObject(e.mesh), xzE.z);
+    //scene.add( e.mesh );
+    
+
+    //Create Sprite
+    var spriteMap = textureLoader.load( "mesh/stadt.png" );
+    var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
+    e.sprite = new THREE.Sprite( spriteMaterial );
+    e.sprite.scale.set(4096, 4096, 1);
+    e.sprite.position.set(xzE.x, groundAltitude + 2048, xzE.z);
+    //e.sprite.position.normalize();
+    //e.sprite.position.multiplyScalar( 20000000 );
+    scene.add( e.sprite );
+  });
+
+  //cube.position.set(60, 0, 60);
+
+  camera.position.set(xzMittelpunkt.x, groundAltitude + 2, xzMittelpunkt.z);
+  //camera.position.set(188959, 2500, -95000);
+  
+  ctLuzern = getCity("luzern");
+  console.log(ctLuzern);
+  //camera.lookAt(ctLuzern.sprite.position);
+  /*
+  //Add Orbiter
+  controls = new THREE.OrbitControls( camera, renderer.domElement );
+  //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+  controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+  controls.dampingFactor = 0.25;
+  controls.screenSpacePanning = false;
+  controls.minDistance = 100;
+  controls.maxDistance = 500
+  controls.maxPolarAngle = Math.PI / 2;
+*/
+  
+  //animate();
+
+
+  renderer.render( scene, camera );
+
 });
+
+function getCity(_id)
+{
+  var found = false;
+  cities.forEach(function(e) {
+    if(e.id == _id)
+    {
+      r = e;
+      found = true;
+      return false;
+    }
+  });
+
+  if(found)
+    return r;
+
+  if(!found)
+  {
+    throw _id + " nicht gefunden";
+  }
+}
+
+
+function animate() {
+  requestAnimationFrame( animate );
+  controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+  renderer.render( scene, camera );
+}
+
+function km(_km)
+{
+  return _km * 1000;
+}
+
+function getBoundingBoxOfObject(_object)
+{
+  var size3 = new THREE.Vector3();
+  var box = new THREE.Box3().setFromObject( _object );
+  box.getSize(size3);
+  return size3;
+}
+
+function getHalfHeightOfObject(_object)
+{
+  var size3 = getBoundingBoxOfObject(_object);
+  return size3.y / 2;
+}
 
 function LatLon(lat, lon) {
   if (!(this instanceof LatLon)) return new LatLon(lat, lon);
@@ -22,20 +295,22 @@ function LatLon(lat, lon) {
   this.lon = Number(lon);
 }
 
-function xy(x, y)
+function xz(x, z)
 {
   this.x = Number(x);
-  this.y = Number(y);
+  this.z = Number(z);
 }
 
 function distance(p1, p2) {
-  var p = 0.017453292519943295;    // Math.PI / 180
+  //var p = 0.017453292519943295;    // Math.PI / 180
+  var p = Math.PI / 180;
   var c = Math.cos;
   var a = 0.5 - c((p2.lat - p1.lat) * p)/2 + 
           c(p1.lat * p) * c(p2.lat * p) * 
           (1 - c((p2.lon - p1.lon) * p))/2;
 
-  return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+  var km = 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+  return km * 1000;
 }
 
 function deg2rad(deg) {
@@ -68,6 +343,7 @@ function bearingTo(source, point) {
 https://stackoverflow.com/questions/3932502/calculate-angle-between-two-latitude-longitude-points
 vergleichen mit google maps api
 */
+/*
 function angleFromCoordinate(lat1, long1, lat2, long2) 
 {
   dLon = (long2 - long1);
@@ -83,17 +359,55 @@ function angleFromCoordinate(lat1, long1, lat2, long2)
 
   return brng;
 }
+*/
 
-function LonLat2XY(p1, p2)
+/*
+function angleFromCoordinate2(p1, p2)
 {
-  var c = distance(p1, p2)
-  //var alpha = bearingTo(p1, p2);
-  var alpha = angleFromCoordinate(p1.lat, p1.lon, p2.lat, p2.lon);
-  console.log(alpha);
+  return Math.atan2(Math.sin(p2.lon - p1.lon)*Math.cos(p2.lat), Math.cos(p1.lat)*Math.sin(p2.lat) - Math.sin(p1.lat)*Math.cos(p2.lat)*Math.cos(p2.lon - p1.lon))
+}
+*/
 
-  var beta = 90 - alpha;
+function latLon2XY(_nullPoint, _point)
+{
+  var c = distance(_nullPoint, _point)
+  //console.log("distance", c);
+  
+  //v0
+  var alpha0 = bearingTo(_nullPoint, _point);
+  //console.log("alpha0", alpha0);
+/*
+  //v1
+  var alpha = angleFromCoordinate(p1.lat, p1.lon, p2.lat, p2.lon);
+  console.log("Alpha", alpha);
+
+  //v2
+  var alpha2 = angleFromCoordinate2(p1, p2);
+  console.log("alpha2", rad2deg(alpha2));
+*/
+  //vGoogle
+  var point1 = new google.maps.LatLng(_nullPoint.lat, _nullPoint.lon);
+  var point2 = new google.maps.LatLng(_point.lat, _point.lon);
+  var heading = google.maps.geometry.spherical.computeHeading(point1,point2);
+  //console.log("google maps heading", heading);
+
+  var gDistance = google.maps.geometry.spherical.computeDistanceBetween(point1,point2);
+  //console.log("google maps distance", gDistance);
+
+  /*
+  var beta = 90 - alpha0;
+  console.log("beta", beta);
   a = c * Math.cos(beta);
   console.log(c, a);
   b = Math.sqrt(Math.pow(c, 2) - Math.pow(a, 2));
-  return new xy(a, b);
+  */
+
+  //Versuch über Koordinaten-Manipulation und Distanz
+  distanceX = distance(_nullPoint, new LatLon(_nullPoint.lat, _point.lon));
+  distanceZ = distance(_nullPoint, new LatLon(_point.lat, _nullPoint.lon));
+
+  //return new xz(Math.trunc(a), Math.trunc(b) * -1); //z umkehren, weil ThreeJS verkehrt rechnet...
+  return new xz(Math.trunc(distanceX), Math.trunc(distanceZ) * -1); //z umkehren, weil ThreeJS verkehrt rechnet...
 }
+
+
