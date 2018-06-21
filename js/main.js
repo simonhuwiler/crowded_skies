@@ -7,8 +7,10 @@ https://www.northrivergeographic.com/qgis-points-along-line
 // LatLon-Aufteilung!
 const groundAltitude = 500
 var llNullPoint = new LatLon(46.2, 5.85);
+var llNullPoint = new LatLon(45.4, 5.8);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
 var llLuzern = new LatLon(47.055046, 8.305300);
+var controls;
 
 var cities = [
   {
@@ -101,7 +103,17 @@ var cities = [
     "img": "davos.png",
     "latlon": new LatLon(46.801325, 9.827914)
   }
-]
+];
+
+var airways = [
+  {
+    "id": "UN850",
+    "lonlat": [[8.808021360795664,45.449507770139959],[8.706851087157958,45.895490546539691],[8.757280538595097,46.131789824494128],[8.557143404345615,46.330800363284773],[8.728559520865343,46.461621666371045],[8.513619277734481,46.646655893622416],[8.64464937497466,46.842779372346612],[8.456255332947643,47.008130841118536],[8.676223656990755,47.257787527581741],[8.483785365755898,47.305997329032429],[8.414600189317715,47.70213335233813],[8.198102148208548,48.118755734460102]]
+  }
+];
+
+
+
 var renderer, scene, camera;
 
 $(document).ready( function() {
@@ -109,6 +121,20 @@ $(document).ready( function() {
   $("#render").on("click", function() {
     renderer.render( scene, camera );
   });
+
+  $("#doit").on("click", function() {
+    console.log("doit");
+    camera.lookAt(new THREE.Vector3(xzMittelpunkt.x, -200, xzMittelpunkt.z));
+    camera.position.y = km(200);
+    renderer.render( scene, camera );
+  
+  });
+
+  $("#kippen").on("click", function() {
+    console.log("kippen");
+    camera.rotation.x = camera.rotation.x + 0.1;
+    renderer.render( scene, camera );
+  })
 
   console.log("== Mittelpunkt");
   xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
@@ -126,11 +152,7 @@ $(document).ready( function() {
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
 
-/*
-  var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-  var cube = new THREE.Mesh( geometry, material );
-  //scene.add( cube );
+
 
   /*
   var spriteMap = new THREE.TextureLoader().load( "mesh/blau.jpg" );
@@ -197,10 +219,9 @@ $(document).ready( function() {
     xzE = latLon2XY(llNullPoint, e.latlon);
 
     //Create Mesh
-    
     e.mesh = new THREE.Mesh( e.geometry, e.material );
     e.mesh.position.set(xzE.x, groundAltitude + getHalfHeightOfObject(e.mesh), xzE.z);
-    //scene.add( e.mesh );
+    scene.add( e.mesh );
     
 
     //Create Sprite
@@ -214,6 +235,59 @@ $(document).ready( function() {
     scene.add( e.sprite );
   });
 
+  //Add Airways
+
+  airways.forEach(function(e) {
+    //Create Line-Geometry
+    var l_geometry = new THREE.Geometry();
+
+    //Loop each point
+    e.lonlat.forEach(function(lonlat) {
+      //Calculate XY
+      xzE = latLon2XY(llNullPoint, new LatLon(lonlat[1], lonlat[0]));
+
+      //Add Linepoint
+      l_geometry.vertices.push(new THREE.Vector3(xzE.x, km(20), xzE.z));
+    });
+    
+  
+    var l_line = new MeshLine();
+    l_line.setGeometry(l_geometry);
+  
+    var l_material = new MeshLineMaterial({
+      color: new THREE.Color(0xffff00),
+      sizeAttenuation: true,
+      near: 0.1,
+      far: km(200),
+      lineWidth: km(10)
+    });
+    var l_mesh = new THREE.Mesh( l_line.geometry, l_material ); // this syntax could definitely be improved!
+    scene.add( l_mesh );
+
+    /*
+    var material = new THREE.LineMaterial({
+      color: 0x0000ff,
+      linewidth: 100000,
+      linejoin:  'round'
+    });
+    
+    var geometry = new THREE.Geometry();
+
+
+    e.lonlat.forEach(function(lonlat) {
+      //Calculate XY
+      console.log(new LatLon(lonlat[1], lonlat[0]));
+      xzE = latLon2XY(llNullPoint, new LatLon(lonlat[1], lonlat[0]));
+
+      //Add Linepoint
+      geometry.vertices.push(new THREE.Vector3( xzE.x, km(50), xzE.z ));
+    });
+    
+    var line = new THREE.Line( geometry, material );
+    scene.add( line );
+    */
+  });
+
   //cube.position.set(60, 0, 60);
 
   camera.position.set(xzMittelpunkt.x, groundAltitude + 2, xzMittelpunkt.z);
@@ -221,23 +295,10 @@ $(document).ready( function() {
   
   ctLuzern = getCity("luzern");
   console.log(ctLuzern);
-  //camera.lookAt(ctLuzern.sprite.position);
-  /*
-  //Add Orbiter
-  controls = new THREE.OrbitControls( camera, renderer.domElement );
-  //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-  controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-  controls.dampingFactor = 0.25;
-  controls.screenSpacePanning = false;
-  controls.minDistance = 100;
-  controls.maxDistance = 500
-  controls.maxPolarAngle = Math.PI / 2;
-*/
-  
-  //animate();
 
-
+  //controls = new THREE.OrbitControls( camera, renderer.domElement );
   renderer.render( scene, camera );
+  //animate();
 
 });
 
@@ -264,8 +325,10 @@ function getCity(_id)
 
 
 function animate() {
+
   requestAnimationFrame( animate );
-  controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+  controls.update();
+
   renderer.render( scene, camera );
 }
 
