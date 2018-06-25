@@ -1,6 +1,7 @@
 /*
 
 https://www.northrivergeographic.com/qgis-points-along-line
+https://threejs.org/examples/webgl_lights_hemisphere.html
 
 */
 
@@ -9,7 +10,10 @@ const groundAltitude = 500
 var llNullPoint = new LatLon(46.2, 5.85);
 var llNullPoint = new LatLon(45.4, 5.8);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
+var llFlughafen = new LatLon(47.454588, 8.555721);
 var llLuzern = new LatLon(47.055046, 8.305300);
+
+var llStartpunkt = llMittelpunkt;
 var controls;
 
 var cities = [
@@ -124,16 +128,38 @@ $(document).ready( function() {
 
   $("#doit").on("click", function() {
     console.log("doit");
-    camera.lookAt(new THREE.Vector3(xzMittelpunkt.x, -200, xzMittelpunkt.z));
+    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, -200, xzStartpunkt.z));
     camera.position.y = km(200);
     renderer.render( scene, camera );
-  
+  });
+
+  $("#doitback").on("click", function() {
+    console.log("doitback");
+    camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
+    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z - 200));
+    renderer.render( scene, camera );
   });
 
   $("#kippen").on("click", function() {
     console.log("kippen");
     camera.rotation.x = camera.rotation.x + 0.1;
     renderer.render( scene, camera );
+  })
+
+  $("#count").on("click", function() {
+    console.log("count");
+    var doIt = true;
+    while(doIt)
+    {
+      lastTrack.setMinutes(lastTrack.getMinutes() + 1);
+      renderTimeSerie(lastTrack);
+      
+      if(lastTrack.getHours() == 8)
+        doIt = false;
+    }
+    renderer.render( scene, camera );
+    console.log("fertig");
+
   })
 
   console.log("== Mittelpunkt");
@@ -144,73 +170,121 @@ $(document).ready( function() {
 
   console.log(xzMittelpunkt, xzLuzern);
 
+  //Init Scene
   scene = new THREE.Scene();
-  scene.background = new THREE.Color( 0xccd2ff );
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 300000);
+  //scene.background = new THREE.Color( 0xccd2ff );
+  scene.background = new THREE.Color().setHSL( 0.6, 0, 1 );
+  scene.fog = new THREE.Fog( scene.background, 1, km(100) );
+
+
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 30000000);
   
   renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.gammaInput = true;
+  renderer.gammaOutput = true;
+  //renderer.shadowMap.enabled = true;
   document.body.appendChild( renderer.domElement );
 
 
 
-  /*
-  var spriteMap = new THREE.TextureLoader().load( "mesh/blau.jpg" );
-  var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, color: 0xffcc00} );
-  var sprite = new THREE.Sprite( spriteMaterial );
-  sprite.scale.set(256, 256, 1);
-  sprite.visible = true;
-  */
-
-/*
-  var crateTexture = new THREE.TextureLoader().load( "mesh/blau.jpg", function(e) {
-    var crateMaterial = new THREE.SpriteMaterial( { map: e, side:THREE.DoubleSide, transparent: true, color: 0xffffff } );
-    var sprite2 = new THREE.Sprite( crateMaterial );
-    //sprite2.position.set( 0, 0, 0 );
-    sprite2.scale.set( 1, 1, 1.0 ); // imageWidth, imageHeight
-    scene.add( sprite2 );
-    renderer.render( scene, camera );
-
-  } );
-  */
-/*
-  var crateTexture = new THREE.TextureLoader().load( "mesh/blau.jpg");
-  console.log(crateTexture);
-  var crateMaterial = new THREE.SpriteMaterial( { map: crateTexture, side:THREE.DoubleSide, transparent: true, color: 0xffffff } );
-  var sprite2 = new THREE.Sprite( crateMaterial );
-  //sprite2.position.set( 0, 0, 0 );
-  sprite2.scale.set( 1, 1, 1.0 ); // imageWidth, imageHeight
-  scene.add( sprite2 );
-  renderer.render( scene, camera );
-*/
-
-
-  //camera.position.z = 5;
-  //camera.lookAt(sprite2.position);
-
- // scene.add( sprite );
+  xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
 
 
 
-  //Add Ground
-  var ground = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry( km(500), km(500), 1, 1 ),
-    new THREE.MeshPhongMaterial( { color: 0xffffff } )
-  );
-  ground.rotation.x = - Math.PI / 2; // rotates X/Y to X/Z
-  ground.receiveShadow = true;
-  ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
-  scene.add( ground );
 
-  //Add Light
-  var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-  scene.add( light );
+				// LIGHTS
+
+				hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+				hemiLight.color.setHSL( 0.6, 1, 0.6 );
+				hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+				hemiLight.position.set( 0, km(100), 0 );
+				scene.add( hemiLight );
+
+				hemiLightHelper = new THREE.HemisphereLightHelper( hemiLight, 10 );
+				//scene.add( hemiLightHelper );
+
+				//
+
+				dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				dirLight.color.setHSL( 0.1, 1, 0.55 );
+				dirLight.position.set( -1, 550, 1 );
+        //dirLight.position.set(xzMittelpunkt.x, groundAltitude + 50, xzMittelpunkt.z);
+				dirLight.position.multiplyScalar( 30 );
+				//scene.add( dirLight );
+
+				dirLight.castShadow = true;
+
+				dirLight.shadow.mapSize.width = 2048;
+				dirLight.shadow.mapSize.height = 2048;
+
+				var d = 50;
+
+				dirLight.shadow.camera.left = -d;
+				dirLight.shadow.camera.right = d;
+				dirLight.shadow.camera.top = d;
+				dirLight.shadow.camera.bottom = -d;
+
+				dirLight.shadow.camera.far = 3500;
+				dirLight.shadow.bias = -0.0001;
+
+				dirLightHeper = new THREE.DirectionalLightHelper( dirLight, 10 );
+				//scene.add( dirLightHeper );
+
+				// GROUND
+
+				var groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
+				var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
+				groundMat.color.setHSL( 0.095, 1, 0.75 );
+
+				var ground = new THREE.Mesh( groundGeo, groundMat );
+        ground.rotation.x = - Math.PI / 2; // rotates X/Y to X/Z
+        ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
+				scene.add( ground );
+
+        ground.receiveShadow = true;
+        
+
+
+
+
+
+
+				// SKYDOME
+
+				var vertexShader = document.getElementById( 'vertexShader' ).textContent;
+        var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+				var uniforms = {
+					topColor:    { value: new THREE.Color( 0x0077ff ) },
+					bottomColor: { value: new THREE.Color( 0xffffff ) },
+					offset:      { value: 33 },
+					exponent:    { value: 0.6 }
+				};
+				uniforms.topColor.value.copy( hemiLight.color );
+
+				scene.fog.color.copy( uniforms.bottomColor.value );
+
+        var skyGeo = new THREE.SphereBufferGeometry( km(250), 32, 15 );
+				var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+
+        var sky = new THREE.Mesh( skyGeo, skyMat );
+        sky.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
+				scene.add( sky );
+
+
+
+
+
+
+
+
+  
 
   var textureLoader = new THREE.TextureLoader();
   //Add Fix Points (Cities)
   cities.forEach(function(e) {
     //Create Geometry
-    e.geometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
+    e.geometry = new THREE.BoxGeometry( km(1), km(1), km(1) );
 
     //Create Mataerial
     e.material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
@@ -262,7 +336,7 @@ $(document).ready( function() {
       lineWidth: km(10)
     });
     var l_mesh = new THREE.Mesh( l_line.geometry, l_material ); // this syntax could definitely be improved!
-    scene.add( l_mesh );
+    //scene.add( l_mesh );
 
     /*
     var material = new THREE.LineMaterial({
@@ -290,7 +364,16 @@ $(document).ready( function() {
 
   //cube.position.set(60, 0, 60);
 
-  camera.position.set(xzMittelpunkt.x, groundAltitude + 2, xzMittelpunkt.z);
+  
+  camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
+
+  tmpGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
+  tmpMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000} );
+  tmpMesh = new THREE.Mesh( tmpGeometry, tmpMaterial );
+  tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
+  scene.add(tmpMesh);
+
+
   //camera.position.set(188959, 2500, -95000);
   
   ctLuzern = getCity("luzern");
@@ -300,7 +383,214 @@ $(document).ready( function() {
   renderer.render( scene, camera );
   //animate();
 
+  //loadData();
+  $.ajax({
+    type: "GET",
+    url: "data/data.csv",
+    success: loadData
+  });
+
 });
+
+//Data by timestamp
+data_series = [];
+
+//icao24-Object for reference
+data_icao24 = []
+
+function loadData(_data)
+{
+  //console.log(_data);
+  var allTextLines = _data.split(/\r\n|\n/);
+  var headers = allTextLines[0].split(',');
+  var lines = [];
+
+  for (var i=1; i<allTextLines.length; i++) {
+      var data = allTextLines[i].split(',');
+      if (data.length == headers.length) {
+
+          var tarr = [];
+          for (var j=0; j<headers.length; j++) {
+              tarr.push(data[j]);
+          }
+          lines.push(tarr);
+      }
+  }
+
+  //Create Data Serie
+  lines.forEach(function(d) {
+    var timestamp = d[headers.indexOf('timestamp')];
+
+    //Add Timestamp, if not exists
+    if(!(timestamp in data_series))
+    {
+      data_series[timestamp] = [];
+    }
+
+    if(!data_icao24[d[headers.indexOf('icao24')]])
+    {
+      var icao24 = {
+        "icao24": d[headers.indexOf('icao24')],
+        "geometry": undefined,
+        "mesh": undefined,
+        "series": [],
+        "color": getRandomColor()
+      };
+      data_icao24[d[headers.indexOf('icao24')]] = icao24;
+    }
+
+    //Add Data to Timestamp
+    var record = {
+      "icao24": data_icao24[d[headers.indexOf('icao24')]],
+      "altitude": d[headers.indexOf('altitude')],
+      //"altitude": km(20),
+      //"latlon": new LatLon(d[headers.indexOf('latitude')], d[headers.indexOf('longitude')]),
+      "xz": latLon2XY(llNullPoint, new LatLon(d[headers.indexOf('latitude')], d[headers.indexOf('longitude')]))
+    }
+    data_series[timestamp].push(record);
+
+    data_icao24[d[headers.indexOf('icao24')]].series.push(record);
+
+    //console.log(d);
+  });
+  renderTracks();
+}
+
+function getRandomColor() {
+  var letters = '0123456789abcdef';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+
+  return color;
+}
+
+
+function renderTracks()
+{
+  for(icao24 in data_icao24)
+  {
+    icao24 = data_icao24[icao24];
+    
+    //Add Mesh
+    icao24.geometry = new THREE.Geometry();
+    icao24.geometry.vertices.needsUpdate = true;
+    icao24.geometry.needsUpdate = true;
+
+    var l_material = new THREE.LineBasicMaterial( { color: icao24.color } );
+    icao24.mesh = new THREE.Line( icao24.geometry, l_material );
+
+    //icao24.geometry.vertices.push(new THREE.Vector3(icao24.series[0].xz.x, icao24.series[0].altitude, icao24.series[0].xz.z));
+
+    //Add vertices for each point. But add always the first point!
+    for(var i = 0; i <= icao24.series.length - 1; i++)
+    {
+      var vector = new THREE.Vector3(icao24.series[0].xz.x, km(10), icao24.series[0].xz.z)
+      icao24.series[i].vertice = vector;
+      icao24.geometry.vertices.push(vector);
+    }
+
+    scene.add(icao24.mesh);
+  }
+
+  renderer.render( scene, camera );
+  console.log(data_series);
+  lastTrack = new Date();
+  lastTrack.setHours(0);
+  lastTrack.setMinutes(0);
+  lastTrack.setSeconds(0);
+  console.log(lastTrack);
+}
+
+var lastTrack;
+function renderTimeSerie(_timestamp)
+{
+  lastTrack = _timestamp;
+  timestampAsString = ('0' + _timestamp.getHours()).substr(-2) + ":" + ('0' + _timestamp.getMinutes()).substr(-2)  + ":00";
+  timestamp = data_series[timestampAsString];
+  for(serie in timestamp)
+  {
+    serie = timestamp[serie];
+
+    //Update Vertice-Reference and pray. Attention: All "invisible" vertices must be updated with the current one. Or you get a triangle. Really, do it.
+    var updateIt = false;
+    serie.icao24.series.forEach(function(uSerie) {
+      if(uSerie.xz.x == serie.xz.x && uSerie.xz.z == serie.xz.z)
+      {
+        updateIt = true;
+      }
+
+      if(updateIt)
+      {
+        uSerie.vertice.x = serie.xz.x;
+        uSerie.vertice.y = serie.altitude;
+        uSerie.vertice.z = serie.xz.z;
+      }
+    });
+
+    serie.icao24.geometry.verticesNeedUpdate = true;
+    //serie.icao24.geometry.attributes.position.needsUpdate = true;
+  }
+}
+
+
+function renderTracksOLD()
+{
+  for(timestamp in data_series)
+  {
+    timestamp = data_series[timestamp];
+    for(d in timestamp)
+    {
+      d = timestamp[d];
+
+      //Line not yet created. Go for it!
+      if(d.icao24.mesh == undefined)
+      {
+        //Create Line-Geometry
+        d.icao24.geometry = new THREE.Geometry();
+        d.icao24.geometry.vertices.needsUpdate = true;
+        d.icao24.geometry.needsUpdate = true;
+
+        var l_material = new THREE.LineBasicMaterial( { color: 0xffffff } );
+        d.icao24.mesh = new THREE.Line( d.icao24.geometry, l_material );
+
+        scene.add(d.icao24.mesh);
+      }
+
+      //Add Coordinate
+      d.icao24.geometry.vertices.push(new THREE.Vector3(d.xz.x, d.altitude, d.xz.z));
+      d.icao24.geometry.verticesNeedUpdate = true;
+      d.icao24.geometry.attributes.position.needsUpdate = true;
+    }
+  }
+
+  for(d in data_icao24)
+  {
+    d = data_icao24[d];
+    //console.log(d);
+    //var l_line = new MeshLine();
+
+    var l_material = new THREE.LineBasicMaterial( { color: 0xffff00 } );
+
+    var l_line = new THREE.Line( d.geometry, l_material );
+
+    //scene.add(l_line);
+    /*
+    var l_material = new MeshLineMaterial({
+      color: new THREE.Color(0xffff00),
+      sizeAttenuation: true,
+      near: 0.1,
+      far: km(200),
+      lineWidth: km(10)
+    });
+    */
+
+  }
+  //scene.add( d.icao24.mesh );
+
+  renderer.render( scene, camera );
+}
 
 function getCity(_id)
 {
