@@ -3,7 +3,22 @@
 https://www.northrivergeographic.com/qgis-points-along-line
 https://threejs.org/examples/webgl_lights_hemisphere.html
 
+http://aip.engadin-airport.ch/eAIP/2017-04-27/html/eAIP/LS-ENR-3.3-en-CH.html#ENR33-RDESIG-UN850
+http://aip.engadin-airport.ch/eAIP/2017-05-25/pdf/U-ERC.pdf
+
 */
+
+//Data by timestamp
+data_series = [];
+
+//icao24-Object for reference
+data_icao24 = []
+
+//Airways-Lines as points
+var airways_lines;
+
+//Loader count
+var loaderCounter = 0;
 
 // LatLon-Aufteilung!
 const groundAltitude = 500
@@ -18,6 +33,7 @@ var llGenf = new LatLon(46.202770, 6.148037);
 
 var llStartpunkt = llMittelpunkt;
 var controls;
+var lastTrack;
 
 var cities = [
   {
@@ -112,13 +128,6 @@ var cities = [
   }
 ];
 
-var airways = [
-  {
-    "id": "UN850",
-    "lonlat": [[8.808021360795664,45.449507770139959],[8.706851087157958,45.895490546539691],[8.757280538595097,46.131789824494128],[8.557143404345615,46.330800363284773],[8.728559520865343,46.461621666371045],[8.513619277734481,46.646655893622416],[8.64464937497466,46.842779372346612],[8.456255332947643,47.008130841118536],[8.676223656990755,47.257787527581741],[8.483785365755898,47.305997329032429],[8.414600189317715,47.70213335233813],[8.198102148208548,48.118755734460102]]
-  }
-];
-
 var renderer, scene, camera;
 
 $(document).ready( function() {
@@ -168,16 +177,34 @@ $(document).ready( function() {
     }
     renderer.render( scene, camera );
     console.log("fertig");
+  });
 
-  })
+  //Prepare THREEJS
+  loaderAddCount();
+  prepareTHREEJS();
 
-  console.log("== Mittelpunkt");
+  //Load LineJSON
+  loaderAddCount();
+  $.getJSON("data/airways.geojson", loadAirwaysJson);
+
+  //Load Data
+  loaderAddCount();
+  $.ajax({
+    type: "GET",
+    url: "data/data.csv",
+    success: loadData
+  });
+
+  loaderRemoveCount();
+});
+
+function prepareTHREEJS()
+{
   xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
-
-  console.log("== Luzern");
+  xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
   xzLuzern = latLon2XY(llNullPoint, llLuzern);
 
-  console.log(xzMittelpunkt, xzLuzern);
+  var textureLoader = new THREE.TextureLoader();
 
   //Init Scene
   scene = new THREE.Scene();
@@ -185,9 +212,7 @@ $(document).ready( function() {
   scene.background = new THREE.Color().setHSL( 0.6, 0, 1 );
   scene.fog = new THREE.Fog( scene.background, 1, km(100) );
 
-
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 30000000);
-  
+  //Init Render
   renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   renderer.gammaInput = true;
@@ -195,114 +220,69 @@ $(document).ready( function() {
   //renderer.shadowMap.enabled = true;
   document.body.appendChild( renderer.domElement );
 
+  //Init Lights
+
+  //Init HemisphereLight (color Fading)
+  hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+  hemiLight.color.setHSL( 0.6, 1, 0.6 );
+  hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  hemiLight.position.set( 0, km(100), 0 );
+  scene.add( hemiLight );
+
+  //Add Sun
+  dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+  dirLight.color.setHSL( 0.1, 1, 0.55 );
+  dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
+  scene.add( dirLight );
+
+  //Add ground
+  var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
+  var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
+  groundMat.color.setHSL( 0.095, 1, 0.75 );
+
+  var ground = new THREE.Mesh( groundGeo, groundMat );
+  ground.rotation.x = - Math.PI / 2;
+  ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
+  ground.receiveShadow = true;
+  scene.add( ground );
+
+  //Add Skydom
+  var vertexShader = document.getElementById( 'vertexShader' ).textContent;
+  var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+  var uniforms = {
+    topColor:    { value: new THREE.Color( 0x0077ff ) },
+    bottomColor: { value: new THREE.Color( 0xffffff ) },
+    offset:      { value: 33 },
+    exponent:    { value: 0.6 }
+  };
+  uniforms.topColor.value.copy( hemiLight.color );
+
+  scene.fog.color.copy( uniforms.bottomColor.value );
+
+  var skyGeo = new THREE.SphereBufferGeometry( km(300), 32, 15 );
+  var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+
+  var sky = new THREE.Mesh( skyGeo, skyMat );
+  sky.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
+  //scene.add(sky);
+
+  //Add Skymap
+  var skyOverlayTexture = new textureLoader.load( "img/skybox.png" );
+  skyOverlayTexture.wrapS = THREE.RepeatWrapping; 
+  skyOverlayTexture.wrapT = THREE.RepeatWrapping;
+  skyOverlayTexture.repeat.set(1,1); 
+
+  var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
+  skyOverlayMaterial = new THREE.MeshLambertMaterial({ map : skyOverlayTexture });
+  skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
+  skyOverlayPlane.material.side = THREE.DoubleSide;
+  skyOverlayPlane.transparent = true;
+  skyOverlayPlane.position.set(xzMittelpunkt.x, km(50), xzMittelpunkt.z);
+  skyOverlayPlane.rotation.x = - Math.PI / 2;
+  skyOverlayPlane.receiveShadow = false;
+  scene.add( skyOverlayPlane );
 
 
-  xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
-  
-
-
-
-
-				// LIGHTS
-
-				hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-				hemiLight.color.setHSL( 0.6, 1, 0.6 );
-				hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-				hemiLight.position.set( 0, km(100), 0 );
-				scene.add( hemiLight );
-
-				hemiLightHelper = new THREE.HemisphereLightHelper( hemiLight, 10 );
-				//scene.add( hemiLightHelper );
-
-				//
-
-				dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-				dirLight.color.setHSL( 0.1, 1, 0.55 );
-				dirLight.position.set( -1, 550, 1 );
-        //dirLight.position.set(xzMittelpunkt.x, groundAltitude + 50, xzMittelpunkt.z);
-				dirLight.position.multiplyScalar( 30 );
-				//scene.add( dirLight );
-
-				dirLight.castShadow = true;
-
-				dirLight.shadow.mapSize.width = 2048;
-				dirLight.shadow.mapSize.height = 2048;
-
-				var d = 50;
-
-				dirLight.shadow.camera.left = -d;
-				dirLight.shadow.camera.right = d;
-				dirLight.shadow.camera.top = d;
-				dirLight.shadow.camera.bottom = -d;
-
-				dirLight.shadow.camera.far = 3500;
-				dirLight.shadow.bias = -0.0001;
-
-				dirLightHeper = new THREE.DirectionalLightHelper( dirLight, 10 );
-				//scene.add( dirLightHeper );
-
-				// GROUND
-
-				var groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
-				var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
-				groundMat.color.setHSL( 0.095, 1, 0.75 );
-
-				var ground = new THREE.Mesh( groundGeo, groundMat );
-        ground.rotation.x = - Math.PI / 2; // rotates X/Y to X/Z
-        ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
-				scene.add( ground );
-
-        ground.receiveShadow = true;
-        
-
-
-
-
-
-
-				// SKYDOME
-
-				var vertexShader = document.getElementById( 'vertexShader' ).textContent;
-        var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
-				var uniforms = {
-					topColor:    { value: new THREE.Color( 0x0077ff ) },
-					bottomColor: { value: new THREE.Color( 0xffffff ) },
-					offset:      { value: 33 },
-					exponent:    { value: 0.6 }
-				};
-				uniforms.topColor.value.copy( hemiLight.color );
-
-				scene.fog.color.copy( uniforms.bottomColor.value );
-
-        var skyGeo = new THREE.SphereBufferGeometry( km(250), 32, 15 );
-				var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
-
-        var sky = new THREE.Mesh( skyGeo, skyMat );
-        sky.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
-				scene.add( sky );
-
-
-
-    // Himmel
-    var skyOverlayTexture =  new THREE.TextureLoader().load( "img/skybox.png" );
-
-    // assuming you want the texture to repeat in both directions:
-    skyOverlayTexture.wrapS = THREE.RepeatWrapping; 
-    skyOverlayTexture.wrapT = THREE.RepeatWrapping;
-    skyOverlayTexture.repeat.set(1,1); 
-
-
-    var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
-    skyOverlayMaterial = new THREE.MeshLambertMaterial({ map : skyOverlayTexture });
-    skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
-    skyOverlayPlane.material.side = THREE.DoubleSide;
-    skyOverlayPlane.position.set(xzMittelpunkt.x, km(10), xzMittelpunkt.z);
-    skyOverlayPlane.rotation.x = - Math.PI / 2;
-    skyOverlayPlane.receiveShadow = false;
-    //cene.add( skyOverlayPlane );
-
-
-  var textureLoader = new THREE.TextureLoader();
   //Add Fix Points (Cities)
   cities.forEach(function(e) {
     //Create Geometry
@@ -318,7 +298,6 @@ $(document).ready( function() {
     e.mesh = new THREE.Mesh( e.geometry, e.material );
     e.mesh.position.set(xzE.x, groundAltitude + getHalfHeightOfObject(e.mesh), xzE.z);
     scene.add( e.mesh );
-    
 
     //Create Sprite
     var spriteMap = textureLoader.load( "mesh/stadt.png" );
@@ -331,98 +310,70 @@ $(document).ready( function() {
     scene.add( e.sprite );
   });
 
-  //Add Airways
-
-  airways.forEach(function(e) {
-    //Create Line-Geometry
-    var l_geometry = new THREE.Geometry();
-
-    //Loop each point
-    e.lonlat.forEach(function(lonlat) {
-      //Calculate XY
-      xzE = latLon2XY(llNullPoint, new LatLon(lonlat[1], lonlat[0]));
-
-      //Add Linepoint
-      l_geometry.vertices.push(new THREE.Vector3(xzE.x, km(20), xzE.z));
-    });
-    
-  
-    var l_line = new MeshLine();
-    l_line.setGeometry(l_geometry);
-  
-    var l_material = new MeshLineMaterial({
-      color: new THREE.Color(0xffff00),
-      sizeAttenuation: true,
-      near: 0.1,
-      far: km(200),
-      lineWidth: km(10)
-    });
-    var l_mesh = new THREE.Mesh( l_line.geometry, l_material ); // this syntax could definitely be improved!
-    //scene.add( l_mesh );
-
-    /*
-    var material = new THREE.LineMaterial({
-      color: 0x0000ff,
-      linewidth: 100000,
-      linejoin:  'round'
-    });
-    
-    var geometry = new THREE.Geometry();
-
-
-    e.lonlat.forEach(function(lonlat) {
-      //Calculate XY
-      console.log(new LatLon(lonlat[1], lonlat[0]));
-      xzE = latLon2XY(llNullPoint, new LatLon(lonlat[1], lonlat[0]));
-
-      //Add Linepoint
-      geometry.vertices.push(new THREE.Vector3( xzE.x, km(50), xzE.z ));
-    });
-    
-    var line = new THREE.Line( geometry, material );
-    scene.add( line );
-    */
-  });
-
-  //cube.position.set(60, 0, 60);
-
-  
+  //Init Camera
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, km(300));
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
 
+  //Add Startpoint-Cube (Remove me!)
   tmpGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
   tmpMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000} );
   tmpMesh = new THREE.Mesh( tmpGeometry, tmpMaterial );
   tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   scene.add(tmpMesh);
+}
 
+function loadAirwaysJson(data)
+{
+  airways_lines = data;
 
-  //camera.position.set(188959, 2500, -95000);
-  
-  ctLuzern = getCity("luzern");
-  console.log(ctLuzern);
+  var r = getNearestLines(new LatLon(47.564, 8.735), 3);
+  loaderRemoveCount();
+}
 
-  //controls = new THREE.OrbitControls( camera, renderer.domElement );
-  renderer.render( scene, camera );
-  //animate();
+function getNearestLines(_source, _max)
+{
+  //Copy Geojson
+  var tmpLines = airways_lines;
 
-  //loadData();
-  $.ajax({
-    type: "GET",
-    url: "data/data.csv",
-    success: loadData
-  });
+  //Exclude Lines
+  var exclude_lines = [];
 
-});
+  //Create Turf-Point
+  var pt = turf.point([_source.lon, _source.lat]);
 
-//Data by timestamp
-data_series = [];
+  //Create Result-List
+  var results = [];
 
-//icao24-Object for reference
-data_icao24 = []
+  //Run x times
+  for(var i = 0; i < _max; i++)
+  {
+    //Delete all points, which are already found
+    for(var n = tmpLines.features.length - 1; n >= 0; n--)
+    {
+      //Loop each exclude_lines
+      var name = tmpLines.features[n].properties.name;
+      for(var excl_line = 0; excl_line < exclude_lines.length; excl_line++)
+      {
+        if(name == exclude_lines[excl_line])
+        {
+          //Remove
+          tmpLines.features.splice(n, 1);
+          break;
+        }
+      }
+    }
+
+    //Now find nearest point
+    var res = turf.nearestPoint(pt, tmpLines);
+    results.push(res);
+    exclude_lines.push(res.properties.name);
+  }
+  return results;
+}
 
 function loadData(_data)
 {
-  //console.log(_data);
+  //Parse CSV
   var allTextLines = _data.split(/\r\n|\n/);
   var headers = allTextLines[0].split(',');
   var lines = [];
@@ -470,27 +421,17 @@ function loadData(_data)
       "xz": latLon2XY(llNullPoint, new LatLon(d[headers.indexOf('latitude')], d[headers.indexOf('longitude')]))
     }
     data_series[timestamp].push(record);
-
     data_icao24[d[headers.indexOf('icao24')]].series.push(record);
-
-    //console.log(d);
   });
+
+  //Create Three-Objects
   renderTracks();
+  loaderRemoveCount();
 }
-
-function getRandomColor() {
-  var letters = '0123456789abcdef';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-
-  return color;
-}
-
 
 function renderTracks()
 {
+  //Loop all icao24
   for(icao24 in data_icao24)
   {
     icao24 = data_icao24[icao24];
@@ -503,45 +444,41 @@ function renderTracks()
     var l_material = new THREE.LineBasicMaterial( { color: icao24.color } );
     icao24.mesh = new THREE.Line( icao24.geometry, l_material );
 
-    //icao24.geometry.vertices.push(new THREE.Vector3(icao24.series[0].xz.x, icao24.series[0].altitude, icao24.series[0].xz.z));
-
-    //Add vertices for each point. But add always the first point!
+    //Add vertices for each point. But add always the first point! Its not possible, to add vertices after creation!
     for(var i = 0; i <= icao24.series.length - 1; i++)
     {
       var vector = new THREE.Vector3(icao24.series[0].xz.x, km(10), icao24.series[0].xz.z)
       icao24.series[i].vertice = vector;
       icao24.geometry.vertices.push(vector);
     }
-
     scene.add(icao24.mesh);
   }
 
-  renderer.render( scene, camera );
-  console.log(data_series);
+  //Set lastTrack-Date
   lastTrack = new Date();
   lastTrack.setHours(0);
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
-  console.log(lastTrack);
 }
 
-var lastTrack;
 function renderTimeSerie(_timestamp)
 {
   lastTrack = _timestamp;
+
+  //Format Timestring
   timestampAsString = ('0' + _timestamp.getHours()).substr(-2) + ":" + ('0' + _timestamp.getMinutes()).substr(-2)  + ":00";
+
+  //Load timestamp with all points in it
   timestamp = data_series[timestampAsString];
   for(serie in timestamp)
   {
     serie = timestamp[serie];
 
-    //Update Vertice-Reference and pray. Attention: All "invisible" vertices must be updated with the current one. Or you get a triangle. Really, do it.
+    //Update Vertice-Reference and pray. Attention: All "invisible" vertices must be updated with the current one. Or you get a triangle. Really, do it. Dont ask!
     var updateIt = false;
     serie.icao24.series.forEach(function(uSerie) {
       if(uSerie.xz.x == serie.xz.x && uSerie.xz.z == serie.xz.z)
-      {
         updateIt = true;
-      }
 
       if(updateIt)
       {
@@ -552,67 +489,20 @@ function renderTimeSerie(_timestamp)
     });
 
     serie.icao24.geometry.verticesNeedUpdate = true;
-    //serie.icao24.geometry.attributes.position.needsUpdate = true;
   }
 }
 
-
-function renderTracksOLD()
-{
-  for(timestamp in data_series)
-  {
-    timestamp = data_series[timestamp];
-    for(d in timestamp)
-    {
-      d = timestamp[d];
-
-      //Line not yet created. Go for it!
-      if(d.icao24.mesh == undefined)
-      {
-        //Create Line-Geometry
-        d.icao24.geometry = new THREE.Geometry();
-        d.icao24.geometry.vertices.needsUpdate = true;
-        d.icao24.geometry.needsUpdate = true;
-
-        var l_material = new THREE.LineBasicMaterial( { color: 0xffffff } );
-        d.icao24.mesh = new THREE.Line( d.icao24.geometry, l_material );
-
-        scene.add(d.icao24.mesh);
-      }
-
-      //Add Coordinate
-      d.icao24.geometry.vertices.push(new THREE.Vector3(d.xz.x, d.altitude, d.xz.z));
-      d.icao24.geometry.verticesNeedUpdate = true;
-      d.icao24.geometry.attributes.position.needsUpdate = true;
-    }
+/*
+function getRandomColor() {
+  var letters = '0123456789abcdef';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
   }
 
-  for(d in data_icao24)
-  {
-    d = data_icao24[d];
-    //console.log(d);
-    //var l_line = new MeshLine();
-
-    var l_material = new THREE.LineBasicMaterial( { color: 0xffff00 } );
-
-    var l_line = new THREE.Line( d.geometry, l_material );
-
-    //scene.add(l_line);
-    /*
-    var l_material = new MeshLineMaterial({
-      color: new THREE.Color(0xffff00),
-      sizeAttenuation: true,
-      near: 0.1,
-      far: km(200),
-      lineWidth: km(10)
-    });
-    */
-
-  }
-  //scene.add( d.icao24.mesh );
-
-  renderer.render( scene, camera );
+  return color;
 }
+*/
 
 function getCity(_id)
 {
@@ -632,6 +522,28 @@ function getCity(_id)
   if(!found)
   {
     throw _id + " nicht gefunden";
+  }
+}
+
+//These both are loader functions. When an asynchron task is startet, loadercount is increased.
+function loaderAddCount()
+{
+  loaderCounter++;
+}
+
+function loaderRemoveCount()
+{
+  loaderCounter--;
+  if(loaderCounter < 0)
+  {
+    throw "To many loadercount removes"
+  }
+  else if(loaderCounter == 0)
+  {
+    console.log("Everything loaded. Remove loader")
+    
+    //Do something
+
   }
 }
 
@@ -714,53 +626,11 @@ function bearingTo(source, point) {
   return (rad2deg(θ) + 360) % 360;
 };
 
-/*
-https://stackoverflow.com/questions/3932502/calculate-angle-between-two-latitude-longitude-points
-vergleichen mit google maps api
-*/
-/*
-function angleFromCoordinate(lat1, long1, lat2, long2) 
-{
-  dLon = (long2 - long1);
-
-  y = Math.sin(dLon) * Math.cos(lat2);
-  x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-
-  brng = Math.atan2(y, x);
-
-  brng = rad2deg(brng);
-  brng = (brng + 360) % 360;
-  //brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
-
-  return brng;
-}
-*/
-
-/*
-function angleFromCoordinate2(p1, p2)
-{
-  return Math.atan2(Math.sin(p2.lon - p1.lon)*Math.cos(p2.lat), Math.cos(p1.lat)*Math.sin(p2.lat) - Math.sin(p1.lat)*Math.cos(p2.lat)*Math.cos(p2.lon - p1.lon))
-}
-*/
 
 function latLon2XY(_nullPoint, _point)
 {
-  var c = distance(_nullPoint, _point)
-  //console.log("distance", c);
-  
-  //v0
-  var alpha0 = bearingTo(_nullPoint, _point);
-  //console.log("alpha0", alpha0);
-/*
-  //v1
-  var alpha = angleFromCoordinate(p1.lat, p1.lon, p2.lat, p2.lon);
-  console.log("Alpha", alpha);
-
-  //v2
-  var alpha2 = angleFromCoordinate2(p1, p2);
-  console.log("alpha2", rad2deg(alpha2));
-*/
   //vGoogle
+  /*
   var point1 = new google.maps.LatLng(_nullPoint.lat, _nullPoint.lon);
   var point2 = new google.maps.LatLng(_point.lat, _point.lon);
   var heading = google.maps.geometry.spherical.computeHeading(point1,point2);
@@ -768,20 +638,12 @@ function latLon2XY(_nullPoint, _point)
 
   var gDistance = google.maps.geometry.spherical.computeDistanceBetween(point1,point2);
   //console.log("google maps distance", gDistance);
-
-  /*
-  var beta = 90 - alpha0;
-  console.log("beta", beta);
-  a = c * Math.cos(beta);
-  console.log(c, a);
-  b = Math.sqrt(Math.pow(c, 2) - Math.pow(a, 2));
+  //Needs: <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnNRaRyTgYY5rP_RIvtz8W09p46Qx-Dzw&libraries=geometry"></script>
   */
 
-  //Versuch über Koordinaten-Manipulation und Distanz
   distanceX = distance(_nullPoint, new LatLon(_nullPoint.lat, _point.lon));
   distanceZ = distance(_nullPoint, new LatLon(_point.lat, _nullPoint.lon));
 
-  //return new xz(Math.trunc(a), Math.trunc(b) * -1); //z umkehren, weil ThreeJS verkehrt rechnet...
   return new xz(Math.trunc(distanceX), Math.trunc(distanceZ) * -1); //z umkehren, weil ThreeJS verkehrt rechnet...
 }
 
