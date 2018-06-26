@@ -7,11 +7,14 @@ https://threejs.org/examples/webgl_lights_hemisphere.html
 
 // LatLon-Aufteilung!
 const groundAltitude = 500
-var llNullPoint = new LatLon(46.2, 5.85);
 var llNullPoint = new LatLon(45.4, 5.8);
+var llNEPoint = new LatLon(49.052, 11.001);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
+
 var llFlughafen = new LatLon(47.454588, 8.555721);
 var llLuzern = new LatLon(47.055046, 8.305300);
+var llZurich = new LatLon(47.372084, 8.540693);
+var llGenf = new LatLon(46.202770, 6.148037);
 
 var llStartpunkt = llMittelpunkt;
 var controls;
@@ -116,13 +119,12 @@ var airways = [
   }
 ];
 
-
-
 var renderer, scene, camera;
 
 $(document).ready( function() {
 
   $("#render").on("click", function() {
+    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, km(100), xzStartpunkt.z));
     renderer.render( scene, camera );
   });
 
@@ -144,6 +146,13 @@ $(document).ready( function() {
     console.log("kippen");
     camera.rotation.x = camera.rotation.x + 0.1;
     renderer.render( scene, camera );
+  });
+
+  $(".move_camera").on("click", function(e) {
+    console.log(e.target.dataset.x, e.target.dataset.y);
+    camera.rotation.x = camera.rotation.x + parseFloat(e.target.dataset.x);
+    camera.rotation.y = camera.rotation.y + parseFloat(e.target.dataset.y);
+    renderer.render( scene, camera );
   })
 
   $("#count").on("click", function() {
@@ -154,7 +163,7 @@ $(document).ready( function() {
       lastTrack.setMinutes(lastTrack.getMinutes() + 1);
       renderTimeSerie(lastTrack);
       
-      if(lastTrack.getHours() == 8)
+      if(lastTrack.getHours() == 22)
         doIt = false;
     }
     renderer.render( scene, camera );
@@ -189,6 +198,7 @@ $(document).ready( function() {
 
 
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
+  
 
 
 
@@ -273,12 +283,24 @@ $(document).ready( function() {
 
 
 
+    // Himmel
+    var skyOverlayTexture =  new THREE.TextureLoader().load( "img/skybox.png" );
+
+    // assuming you want the texture to repeat in both directions:
+    skyOverlayTexture.wrapS = THREE.RepeatWrapping; 
+    skyOverlayTexture.wrapT = THREE.RepeatWrapping;
+    skyOverlayTexture.repeat.set(1,1); 
 
 
+    var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
+    skyOverlayMaterial = new THREE.MeshLambertMaterial({ map : skyOverlayTexture });
+    skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
+    skyOverlayPlane.material.side = THREE.DoubleSide;
+    skyOverlayPlane.position.set(xzMittelpunkt.x, km(10), xzMittelpunkt.z);
+    skyOverlayPlane.rotation.x = - Math.PI / 2;
+    skyOverlayPlane.receiveShadow = false;
+    //cene.add( skyOverlayPlane );
 
-
-
-  
 
   var textureLoader = new THREE.TextureLoader();
   //Add Fix Points (Cities)
@@ -434,7 +456,7 @@ function loadData(_data)
         "geometry": undefined,
         "mesh": undefined,
         "series": [],
-        "color": getRandomColor()
+        "color": 0xffffff//getRandomColor()
       };
       data_icao24[d[headers.indexOf('icao24')]] = icao24;
     }
