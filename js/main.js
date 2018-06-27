@@ -22,6 +22,7 @@ var loaderCounter = 0;
 
 // LatLon-Aufteilung!
 const groundAltitude = 500
+const timeSerieDeltaMin = 1;
 var llNullPoint = new LatLon(45.4, 5.8);
 var llNEPoint = new LatLon(49.052, 11.001);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
@@ -162,7 +163,14 @@ $(document).ready( function() {
     camera.rotation.x = camera.rotation.x + parseFloat(e.target.dataset.x);
     camera.rotation.y = camera.rotation.y + parseFloat(e.target.dataset.y);
     renderer.render( scene, camera );
-  })
+  });
+
+  $("#play").on("click", function(e) {
+    animateLines();
+  });  
+  $("#play2").on("click", function(e) {
+    createTweensAndStart(lastTrack);
+  });
 
   $("#count").on("click", function() {
     console.log("count");
@@ -322,6 +330,14 @@ function prepareTHREEJS()
   scene.add(tmpMesh);
 }
 
+function setCameraPosition(_llStart)
+{
+  xzStartpunkt = latLon2XY(llNullPoint, _llStart);
+  camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
+  tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
+
+}
+
 function loadAirwaysJson(data)
 {
   airways_lines = data;
@@ -390,6 +406,9 @@ function loadData(_data)
       }
   }
 
+  //Load planetexture
+  var spriteMap = new THREE.TextureLoader().load( "img/plane.png" ); //TODO
+
   //Create Data Serie
   lines.forEach(function(d) {
     var timestamp = d[headers.indexOf('timestamp')];
@@ -402,12 +421,21 @@ function loadData(_data)
 
     if(!data_icao24[d[headers.indexOf('icao24')]])
     {
+      //Prepare Sprite
+      
+      var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, color: 0xffffff } );
+      var sprite = new THREE.Sprite( spriteMaterial );
+      sprite.position.set(xzStartpunkt.x, km(1), xzStartpunkt.z);
+      sprite.scale.set(512, 512, 1);
+      scene.add( sprite );
+
       var icao24 = {
         "icao24": d[headers.indexOf('icao24')],
         "geometry": undefined,
-        "mesh": undefined,
+        "meshline": undefined,
+        "meshplane": sprite,
         "series": [],
-        "color": 0xffffff//getRandomColor()
+        "color": 0x887e82//getRandomColor()
       };
       data_icao24[d[headers.indexOf('icao24')]] = icao24;
     }
@@ -415,10 +443,11 @@ function loadData(_data)
     //Add Data to Timestamp
     var record = {
       "icao24": data_icao24[d[headers.indexOf('icao24')]],
-      "altitude": d[headers.indexOf('altitude')],
+      "altitude": parseFloat(d[headers.indexOf('altitude')]),
       //"altitude": km(20),
       //"latlon": new LatLon(d[headers.indexOf('latitude')], d[headers.indexOf('longitude')]),
-      "xz": latLon2XY(llNullPoint, new LatLon(d[headers.indexOf('latitude')], d[headers.indexOf('longitude')]))
+      "xz": latLon2XY(llNullPoint, new LatLon(d[headers.indexOf('latitude')], d[headers.indexOf('longitude')])),
+      "tween": undefined
     }
     data_series[timestamp].push(record);
     data_icao24[d[headers.indexOf('icao24')]].series.push(record);
@@ -442,7 +471,7 @@ function renderTracks()
     icao24.geometry.needsUpdate = true;
 
     var l_material = new THREE.LineBasicMaterial( { color: icao24.color } );
-    icao24.mesh = new THREE.Line( icao24.geometry, l_material );
+    icao24.meshline = new THREE.Line( icao24.geometry, l_material );
 
     //Add vertices for each point. But add always the first point! Its not possible, to add vertices after creation!
     for(var i = 0; i <= icao24.series.length - 1; i++)
@@ -451,7 +480,7 @@ function renderTracks()
       icao24.series[i].vertice = vector;
       icao24.geometry.vertices.push(vector);
     }
-    scene.add(icao24.mesh);
+    scene.add(icao24.meshline);
   }
 
   //Set lastTrack-Date
@@ -545,6 +574,143 @@ function loaderRemoveCount()
     //Do something
 
   }
+}
+
+var clock;
+var tweenArray = [];
+
+function animateLines()
+{
+  lastTrack.setHours(6);
+  lastTrack.setMinutes(0);
+  lastTrack.setSeconds(0);
+  createTweensAndStart(lastTrack);
+}
+
+function createTweensAndStart(_serie)
+{
+  tweenArray = [];
+
+  //###Set Startpoint of each Sprite
+
+  timestampAsString = ('0' + _serie.getHours()).substr(-2) + ":" + ('0' + _serie.getMinutes()).substr(-2)  + ":00";
+  console.log(timestampAsString);
+
+  //calculate next Timestamp
+  var dateNext = new Date(_serie.getTime());
+  dateNext.setMinutes(dateNext.getMinutes() + timeSerieDeltaMin);
+  timestampNextAsString = ('0' + dateNext.getHours()).substr(-2) + ":" + ('0' + dateNext.getMinutes()).substr(-2)  + ":00";
+
+  //Load timestamp with all points in it
+  timestamp = data_series[timestampAsString];
+  timestampNext = data_series[timestampNextAsString];
+  
+  //First check, if timestampNext available. If not, we reached the end and are still alive
+  if(timestampNext)
+  {
+    //There are more Timestamps!
+    for(serie in timestamp)
+    {
+      serie = timestamp[serie];
+      //Look in nextserie. If icao24 not available, hide
+      var foundNext = false;
+      for(serieNext in timestampNext)
+      {
+        serieNext = timestampNext[serieNext];
+        if(serie.icao24.icao24 == serieNext.icao24.icao24)
+        {
+          foundNext = true;
+          break;
+        }
+      }
+  
+      if(foundNext)
+      {
+        //Found next Timestamp. Lets do this!
+        serie.icao24.meshplane.position.x = serie.xz.x;
+        serie.icao24.meshplane.position.y = serie.altitude;
+        serie.icao24.meshplane.position.z = serie.xz.z;
+        serie.icao24.meshplane.visible = true;
+
+        //Make Tween
+        serie.icao24.tween = new TWEEN.Tween(serie.icao24.meshplane.position)
+          .to({x: serieNext.xz.x, y: serieNext.altitude, z: serieNext.xz.z}, 100);
+
+        tweenArray.push(serie.icao24.tween);
+      }
+      else
+      {
+        //No next timestamp found. Hide
+        serie.icao24.meshplane.visible = false;
+      }
+    }
+  }
+  else
+  {
+    console.log("Reached end");
+  }
+
+  //Update last position
+  lastTrack.setMinutes(lastTrack.getMinutes() + timeSerieDeltaMin);
+
+  //Now activate all Tweens and run
+  if(tweenArray.length > 0)
+  {
+    tweenArray.forEach(function(tween) {
+      //console.log("start", tween);
+      tween.start();
+    });
+    
+    animateTween();
+  }
+}
+
+function animateTween()
+{
+  if(TWEEN.getAll().length > 0)
+  {
+    requestAnimationFrame( animateTween );
+    TWEEN.update();
+  }
+  else 
+  {
+    //No more tweens. Calculate next.
+    createTweensAndStart(lastTrack);
+  }
+
+  renderer.render( scene, camera );
+}
+
+function animateIntern()
+{
+
+  if(lastTrack.getHours() <= 22)
+  {
+    requestAnimationFrame( animateIntern );
+    //Go for animation!
+
+  }
+  else
+  {
+    console.log("Zeit abgelaufen");
+  }
+
+  while(doIt)
+  {
+    lastTrack.setMinutes(lastTrack.getMinutes() + 1);
+    renderTimeSerie(lastTrack);
+    
+    if(lastTrack.getHours() == 22)
+      doIt = false;
+  }
+  renderer.render( scene, camera );
+  console.log("fertig");
+
+
+
+  delta = clock.getDelta();
+  renderer.render( scene, camera );
+  console.log(delta);
 }
 
 
