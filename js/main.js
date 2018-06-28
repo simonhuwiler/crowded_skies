@@ -1,5 +1,12 @@
 /*
 
+  ToDo:
+    Tag / Nacht-Verlauf
+
+*/
+var testobject;
+/*
+
 https://www.northrivergeographic.com/qgis-points-along-line
 https://threejs.org/examples/webgl_lights_hemisphere.html
 
@@ -129,12 +136,13 @@ var cities = [
   }
 ];
 
-var renderer, scene, camera;
+var renderer, scene, camera, textureLoader, sky, skyMat;
+var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
   $("#render").on("click", function() {
-    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, km(100), xzStartpunkt.z));
+    //camera.lookAt(new THREE.Vector3(xzStartpunkt.x, km(100), xzStartpunkt.z));
     renderer.render( scene, camera );
   });
 
@@ -164,6 +172,53 @@ $(document).ready( function() {
     camera.rotation.y = camera.rotation.y + parseFloat(e.target.dataset.y);
     renderer.render( scene, camera );
   });
+
+  $("#rendertarget_1").on("click", function(e) {
+
+    console.log("rendertarget1");
+
+
+    var spriteMap = new THREE.TextureLoader().load( "img/plane.png" );
+    var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
+    testobject = new THREE.Sprite( spriteMaterial );
+    testobject.scale.set(32, 32, 1);
+    testobject.position.set(xzStartpunkt.x, groundAltitude + 10, xzStartpunkt.z - km(1));
+    scene.add( testobject );
+    bufferScene.add( testobject );
+
+
+    //Create Bildschirm
+    var fadeMaterial = new THREE.MeshBasicMaterial({
+      //color: 0xffcc00,
+      transparent: true,
+      opacity: 1,
+      map: rendertarget.texture
+    });
+
+    var fadePlane = new THREE.PlaneBufferGeometry(1, 1);
+    var fadeMesh = new THREE.Mesh(fadePlane, fadeMaterial);
+    fadeMesh.position.set(camera.position.x, camera.position.y, camera.position.z - 0.1);
+    fadeMesh.renderOrder = -1;
+    scene.add(fadeMesh);
+     
+
+    renderer.render(bufferScene, camera, rendertarget);
+    renderer.render( scene, camera );
+
+  });
+
+
+  $("#rendertarget_2").on("click", function(e) {
+    console.log("rendertarget2");
+
+    testobject.position.y += 1;
+
+    renderer.render(bufferScene, camera, rendertarget);
+    renderer.render( scene, camera );
+
+  });
+
+  
 
   $("#play").on("click", function(e) {
     animateLines();
@@ -212,21 +267,28 @@ function prepareTHREEJS()
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
   xzLuzern = latLon2XY(llNullPoint, llLuzern);
 
-  var textureLoader = new THREE.TextureLoader();
+  textureLoader = new THREE.TextureLoader();
 
   //Init Scene
   scene = new THREE.Scene();
-  //scene.background = new THREE.Color( 0xccd2ff );
   scene.background = new THREE.Color().setHSL( 0.6, 0, 1 );
-  scene.fog = new THREE.Fog( scene.background, 1, km(100) );
+  scene.fog = new THREE.Fog( scene.background, km(160), km(180));
 
   //Init Render
   renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
-  renderer.gammaInput = true;
-  renderer.gammaOutput = true;
+  renderer.alpha = true;
+  //renderer.gammaInput = true;
+  //renderer.gammaOutput = true;
   //renderer.shadowMap.enabled = true;
   document.body.appendChild( renderer.domElement );
+
+  //TEST RENDERTARGET
+  /*
+  bufferScene = new THREE.Scene();
+  rendertarget = new THREE.WebGLRenderTarget();
+  rendertarget.setSize( window.innerWidth, window.innerHeight );
+  */
 
   //Init Lights
 
@@ -241,7 +303,7 @@ function prepareTHREEJS()
   dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
   dirLight.color.setHSL( 0.1, 1, 0.55 );
   dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
-  scene.add( dirLight );
+  //scene.add( dirLight );
 
   //Add ground
   var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
@@ -265,14 +327,15 @@ function prepareTHREEJS()
   };
   uniforms.topColor.value.copy( hemiLight.color );
 
-  scene.fog.color.copy( uniforms.bottomColor.value );
+  //scene.fog.color.copy( uniforms.bottomColor.value );
 
   var skyGeo = new THREE.SphereBufferGeometry( km(300), 32, 15 );
-  var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+  skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+  console.log(skyMat);
 
-  var sky = new THREE.Mesh( skyGeo, skyMat );
+  sky = new THREE.Mesh( skyGeo, skyMat );
   sky.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
-  //scene.add(sky);
+  scene.add(sky);
 
   //Add Skymap
   var skyOverlayTexture = new textureLoader.load( "img/skybox.png" );
@@ -282,9 +345,9 @@ function prepareTHREEJS()
 
   var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
   skyOverlayMaterial = new THREE.MeshLambertMaterial({ map : skyOverlayTexture });
+  skyOverlayMaterial.transparent = true;
   skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
   skyOverlayPlane.material.side = THREE.DoubleSide;
-  skyOverlayPlane.transparent = true;
   skyOverlayPlane.position.set(xzMittelpunkt.x, km(50), xzMittelpunkt.z);
   skyOverlayPlane.rotation.x = - Math.PI / 2;
   skyOverlayPlane.receiveShadow = false;
@@ -319,7 +382,7 @@ function prepareTHREEJS()
   });
 
   //Init Camera
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, km(300));
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, km(400));
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
 
   //Add Startpoint-Cube (Remove me!)
@@ -421,12 +484,12 @@ function loadData(_data)
 
     if(!data_icao24[d[headers.indexOf('icao24')]])
     {
-      //Prepare Sprite
-      
-      var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, color: 0xffffff } );
+      //Prepare Sprite      
+      var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap } );
       var sprite = new THREE.Sprite( spriteMaterial );
       sprite.position.set(xzStartpunkt.x, km(1), xzStartpunkt.z);
       sprite.scale.set(512, 512, 1);
+      sprite.visible = false;
       scene.add( sprite );
 
       var icao24 = {
@@ -604,6 +667,25 @@ function createTweensAndStart(_serie)
   //Load timestamp with all points in it
   timestamp = data_series[timestampAsString];
   timestampNext = data_series[timestampNextAsString];
+
+
+  //Shader-Test
+  if(_serie.getHours() == 7)
+  {
+    console.log("SHADERTESTè");
+    //Add Skydom
+    var uniforms = {
+      topColor:    { value: new THREE.Color( 0xbada55 ) },
+      bottomColor: { value: new THREE.Color( 0xbada55 ) },
+      offset:      { value: 33 },
+      exponent:    { value: 0.6 }
+    };
+
+    skyMat.uniforms.bottomColor = { value: new THREE.Color( 0xbada55) };
+    skyMat.needsUpdate = true;
+    sky.needsUpdate = true;
+  }
+
   
   //First check, if timestampNext available. If not, we reached the end and are still alive
   if(timestampNext)
