@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <title>Über den Wolken - So ist der Luftraum über der Schweiz organisiert</title>
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.css' rel='stylesheet' />
   <script src="lib/three.min.js" defer="true"></script>
   <script src="lib/THREE.MeshLine.js" defer="true"></script>
   <script src="lib/TrailRenderer.js" defer="true"></script>
@@ -13,6 +15,7 @@
   <script src="lib/tween.min.js" defer="true"></script>
   <script src="js/main.js" defer="true"></script>
 
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="css/main.css">
 
   <!-- RAUS!!! -->
@@ -24,51 +27,112 @@
   </style>
 </head>
 <body>
-		<script type="x-shader/x-vertex" id="vertexShader">
+  <script type="x-shader/x-vertex" id="vertexShader">
 
-			varying vec3 vWorldPosition;
+    varying vec3 vWorldPosition;
 
-			void main() {
+    void main() {
 
-				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
-				vWorldPosition = worldPosition.xyz;
+      vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+      vWorldPosition = worldPosition.xyz;
 
-				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-			}
+    }
 
-		</script>
+  </script>
 
-		<script type="x-shader/x-fragment" id="fragmentShader">
+  <script type="x-shader/x-fragment" id="fragmentShader">
 
-			uniform vec3 topColor;
-			uniform vec3 bottomColor;
-			uniform float offset;
-			uniform float exponent;
+    uniform vec3 topColor;
+    uniform vec3 bottomColor;
+    uniform float offset;
+    uniform float exponent;
 
-			varying vec3 vWorldPosition;
+    varying vec3 vWorldPosition;
 
-			void main() {
+    void main() {
 
-				float h = normalize( vWorldPosition + offset ).y;
-				gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
+      float h = normalize( vWorldPosition + offset ).y;
+      gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
 
-			}
+    }
 
-		</script>
-  <button id='render'>Render</button>
-  <button id="doit">Do it</button>
-  <button id="doitback">Do it back</button>
-  <button id="kippen">kippen</button>
-  <button id="count">+1</button>
-  <button id="play">play</button>
-  <button id="play2">play2</button>
-  <button class="move_camera" data-x=0.1 data-y=0>^</button>
-  <button class="move_camera" data-x=-0.1 data-y=0>v</button>
-  <button class="move_camera" data-x=0 data-y=0.1><</button>
-  <button class="move_camera" data-x=0 data-y=-0.1>></button>
-  <button id="rendertarget_1">1</button>
-  <button id="rendertarget_2">2</button>
-  
+  </script>
+
+  <div style="position: fixed; z-index:10000; top:0px;">
+    <button id='render'>Render</button>
+    <button id="doit">Do it</button>
+    <button id="doitback">Do it back</button>
+    <button id="kippen">kippen</button>
+    <button id="count">+1</button>
+    <button id="play">play</button>
+    <button id="play2">play2</button>
+    <button class="move_camera" data-x=0.1 data-y=0>^</button>
+    <button class="move_camera" data-x=-0.1 data-y=0>v</button>
+    <button class="move_camera" data-x=0 data-y=0.1><</button>
+    <button class="move_camera" data-x=0 data-y=-0.1>></button>
+    <button id="rendertarget_1">1</button>
+    <button id="rendertarget_2">2</button>
+    <button id="cameratest">cameratest</button>
+  </div>
+
+  <div id="wait_after_locate" class="please_wait content_box">
+    <h2>Danke!</h2>
+    Wir bereiten noch kurz etwas für Sie vor...
+  </div>
+
+  <div id="timeline">
+    <img src="img/timeline.png">
+    <div id="timeline_point"></div>
+  </div>
+
+  <div id="content">
+    <div class="chapter">
+      <div class="chapter_content content_box">
+        <h2 class="has_place">Hallo nach {place_name}!</h2>
+        <h2 class="has_no_place">Hallo!</h2>
+        <span class="has_place">Es soll schön sein in der Umgebung von {place_name}! Doch richten wir den Blick gegen den Himmel. Wie sieht der Himmel über {place_name} aus?</span>         
+        <span class="has_no_place">Es soll schön sein an Ihrem gewählten Ort. Doch richten wir den Blick gegen den Himmel. Doch wie sieht der Himmel an Ihrem Ort aus?</span>
+        Scrollen du musst!
+      </div>
+    </div>
+    <div id="chapter_startTHREE" class="chapter">
+      <div class="chapter_content content_box">
+        <h2>Highways</h2>
+        <span class="has_place">Über {place_name} zeigt sich ein dichtes Netz von Flugrouten.</span>
+        <span class="has_no_place">Am Himmel zeigt sich ein dichtes Netz von Flugrouten.</span>
+        Hier dargestellt sind nur die Super-Autobahnen, also die Hauptflugrouten von Passagierflugzeugen. Will ein Flugzeug die Schweiz durchqueren oder hier landen, muss (check) es sich in eine der Routen einreihen.
+      </div>
+    </div>
+    <div class="chapter">
+      <div class="chapter_content content_box">
+        <h2>Nachtflugverbot</h2>
+        <span class="has_place">Noch ist es ruhig in {place_name}.</span>
+        <span class="has_no_place">Noch ist es ruhig.</span>
+        Das Nachtflugverbot gilt zwischen 23 Uhr Abends und 6 Uhr Morgens. In dieser Zeit darf nur mit Ausnahme auf Schweizer Flughäfen gelandet oder gestartet werden. Um sechs Uhr ist es dann soweit. Lassen wir die Flugzeuge starten.
+      </div>
+    </div>
+    
+
+    <div id="chapter_timelaps_slow" class="chapter">
+      
+      <div class="chapter_content content_box">
+        Hallo2
+      </div>
+
+    </div>
+    <div class="chapter">lsdf</div>
+    <div class="chapter">lsdf</div>
+  </div>
+
+  <div id="map">
+    <div id="target">
+      <span id="setPosition">Mit dieser Position starten</span>
+    </div>
+  </div>
+
+  <div id="threejs"></div>
+
 </body>
 </html>
