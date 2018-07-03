@@ -392,22 +392,29 @@ function prepareTHREEJS()
   //Init Lights
 
   //Init HemisphereLight (color Fading)
-  hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-  hemiLight.color.setHSL( 0.6, 1, 0.6 );
-  hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  hemiLight = new THREE.HemisphereLight( 0x0c4fd7, 0xa7bdea, 1 );
+  //hemiLight.color.setHSL( 0.6, 1, 0.6 );
+  //hemiLight.color.setHex(0xffcc00);
+  //hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  //hemiLight.groundColor.setHex(0x000000);
   hemiLight.position.set( 0, km(100), 0 );
-  scene.add( hemiLight );
+  //scene.add( hemiLight );
 
   //Add Sun
-  dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-  dirLight.color.setHSL( 0.1, 1, 0.55 );
+  dirLight = new THREE.DirectionalLight( 0xffffff, 0.2 );
+  
+  //dirLight.color.setHSL( 0.1, 1, 0.55 );
   dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
-  //scene.add( dirLight );
+  scene.add( dirLight );
 
   //Add ground
   var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
-  var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
-  groundMat.color.setHSL( 0.095, 1, 0.75 );
+  //var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 });
+  var groundMat = new THREE.MeshPhongMaterial( { color: 0xf2f2f1, specular: 0xf2f2f1 });
+
+  
+  //groundMat.color.setHSL( 0.095, 1, 0.75 );
+  groundMat.color.setHex(0xf2f2f1);
 
   ground = new THREE.Mesh( groundGeo, groundMat );
   ground.rotation.x = - Math.PI / 2;
@@ -538,7 +545,7 @@ function userPositionSelected()
   //Set Startpoint and make a first Render
   llStartpunkt = new LatLon(map.getCenter().lat, map.getCenter().lng);
   setCameraPosition(llStartpunkt);
-  camera.rotation.x = 0.9;
+  //camera.rotation.x = 0.9;
   render();
 
   //Geocode Position
@@ -653,7 +660,6 @@ function setCameraPosition(_llStart)
 
 ###############################
 */
-/*
 function getNewCameraRotation(_vector3)
 {
     //Save Cameraposition
@@ -676,6 +682,7 @@ function getNewCameraRotation(_vector3)
     return {x: newRotationX, y: newRotationY, z: newRotationZ};
 }
 
+/*
 var cameraMovements = [];
 var lastCameraMovement = -1;
 
@@ -1014,11 +1021,18 @@ function createTweensAndStart(_serie)
   var colorRatio = 1 / 120;
   if(_serie.getHours() >= 6 && _serie.getHours() <= 7)
   {
+    //Change Background
     skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r + colorRatio, skyMat.uniforms.bottomColor.value.g + colorRatio, skyMat.uniforms.bottomColor.value.b + colorRatio);
+
+    //Change Light Color (0.2 -> 0.6)
+    dirLight.intensity += 0.4 * colorRatio;
   }
   else if(_serie.getHours() >= 21 && _serie.getHours() <= 22)
   {
     skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r - colorRatio, skyMat.uniforms.bottomColor.value.g - colorRatio, skyMat.uniforms.bottomColor.value.b - colorRatio);
+    
+    //Change Light Color (0.6 -> 0.2)
+    dirLight.intensity -= 0.4 * colorRatio;
   }
 
   
@@ -1168,17 +1182,40 @@ function startTHREEJS()
   map.once('moveend', function() {
     //Animation ended
     $("#map").fadeOut();
-    camera.rotation.x = 0.9;
-    rotateCamera(0, 0, 0, 4000)
+    render();
+    if(bearing == 0)
+    {
+      //Workaround: Nur animation, wenn nicht zum Mittelpunkt schauen
+      camera.rotation.x = 0.9;
+      rotateCamera(0, camera.rotation.y, camera.rotation.z, 4000);
+    }
+
+
   }); 
+
+  /*
+    Zum Mittelpunkt schauen, wenn:
+      Lat > 47.4838
+      Lng < 7.3563 oder < 9.1893
+  */
+
+  var bearing = 0;
+
+  if(llStartpunkt.lat > 47.4838 || llStartpunkt.lon < 7.3563 || llStartpunkt.lon > 9.1893)
+  {
+    //Look at Mittelpunkt
+    camera.lookAt(new THREE.Vector3(xzMittelpunkt.x, groundAltitude + 2, xzMittelpunkt.z));
+    bearing = bearingTo(llStartpunkt, llMittelpunkt);
+  }
 
   //Lets Fly!
   map.flyTo({
     center: [llStartpunkt.lon, llStartpunkt.lat],
     pitch: 60,
     zoom: 16,
-    duration: 3000
-  })
+    duration: 3000,
+    bearing: bearing
+  });
 }
 
 function chapter_timelaps_slow()
