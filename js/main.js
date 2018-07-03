@@ -2,6 +2,8 @@
 
   ToDo:
     Resize. Three neu berechnen plus calculateScrollTop();
+    Kameraposition nicht immer nach Norden
+    Linien zeichenn optimieren!
 
 */
 var testobject;
@@ -50,6 +52,8 @@ var llGenf = new LatLon(46.202770, 6.148037);
 var llStartpunkt = llMittelpunkt;
 var controls;
 var lastTrack;
+var trackGroup;
+var trackLineMaterial;
 
 //Mapbox Variables
 var map;
@@ -60,6 +64,7 @@ var lastChapter;
 var chapterEvents = [];
 chapterEvents['chapter_startTHREE'] = startTHREEJS;
 chapterEvents['chapter_timelaps_slow'] = chapter_timelaps_slow;
+chapterEvents['chapter_show_lines'] = chapter_show_lines;
 var chapterScrolltop = [];
 
 /*
@@ -182,6 +187,8 @@ airports['Basel'] = new LatLon(47.5985, 7.5262);
 ###############################
 */
 var renderer, scene, camera, textureLoader, sky, skyMat, ground;
+var tweenGroupPoints = new TWEEN.Group();
+var tweenGroupCameras = new TWEEN.Group();
 var rendertarget, bufferScene;
 
 /*
@@ -191,6 +198,7 @@ var rendertarget, bufferScene;
 
 ###############################
 */
+
 $(document).ready( function() {
 
   $("#render").on("click", function() {
@@ -199,10 +207,18 @@ $(document).ready( function() {
   });
 
   $("#doit").on("click", function() {
-    console.log("doit");
-    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, -200, xzStartpunkt.z));
-    camera.position.y = km(200);
-    renderer.render( scene, camera );
+    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x + 4, camera.position.y + 5, camera.position.z - 20)));
+    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x - 4, camera.position.y + 5, camera.position.z - 20)));
+    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 1)));
+
+    createCameraMovementTween();
+    //Tween
+    //new TWEEN.Tween(camera.rotation, tweenGroupCameras).to({x: newRotationX, y: newRotationY, z: newRotationZ}, 2000);
+
+
+    //animateTweenTracks();
+    //chapter_show_lines();
+    
   });
 
   $("#doitback").on("click", function() {
@@ -277,6 +293,9 @@ $(document).ready( function() {
   });
 
   $("#count").on("click", function() {
+    renderTracks();
+    render();
+    return;
     console.log("count");
     var doIt = true;
     while(doIt)
@@ -428,7 +447,7 @@ function prepareTHREEJS()
   skyOverlayMaterial.transparent = true;
   skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
   skyOverlayPlane.material.side = THREE.DoubleSide;
-  skyOverlayPlane.position.set(xzMittelpunkt.x, km(50), xzMittelpunkt.z);
+  skyOverlayPlane.position.set(xzMittelpunkt.x, km(30), xzMittelpunkt.z);
   skyOverlayPlane.rotation.x = - Math.PI / 2;
   skyOverlayPlane.receiveShadow = false;
   scene.add( skyOverlayPlane );
@@ -436,22 +455,24 @@ function prepareTHREEJS()
 
   //Add Fix Points (Cities)
   cities.forEach(function(e) {
+    //Calculate XZ
+    xzE = latLon2XY(llNullPoint, e.latlon);
+
+    /*
     //Create Geometry
     e.geometry = new THREE.BoxGeometry( km(1), km(1), km(1) );
 
     //Create Mataerial
     e.material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
 
-    //Calculate XZ
-    xzE = latLon2XY(llNullPoint, e.latlon);
-
     //Create Mesh
     e.mesh = new THREE.Mesh( e.geometry, e.material );
     e.mesh.position.set(xzE.x, groundAltitude + getHalfHeightOfObject(e.mesh), xzE.z);
     scene.add( e.mesh );
+    */
 
     //Create Sprite
-    var spriteMap = textureLoader.load( "mesh/stadt.png" );
+    var spriteMap = textureLoader.load( "mesh/luzern.png" );
     var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
     e.sprite = new THREE.Sprite( spriteMaterial );
     e.sprite.scale.set(4096, 4096, 1);
@@ -475,7 +496,7 @@ function prepareTHREEJS()
 
 function rotateCamera(_x, _y, _z, _duration)
 {
-  new TWEEN.Tween(camera.rotation)
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
     .to({x: _x, y: _y, z: _z}, _duration)
     .easing(TWEEN.Easing.Cubic.Out)
     .start();
@@ -485,10 +506,10 @@ function rotateCamera(_x, _y, _z, _duration)
 
 function animateTween()
 {
-  if(TWEEN.getAll().length > 0)
+  if(tweenGroupCameras.getAll().length > 0)
   {
     requestAnimationFrame( animateTween );
-    TWEEN.update();
+    tweenGroupCameras.update();
   }
   else 
   {
@@ -606,6 +627,14 @@ function calculateScrollTop()
   }
 }
 
+function addFixChart(_url)
+{
+  var fixchart = $("#fixchart");
+  fixchart.empty();
+  fixchart.append($("<img src='" + _url + "'>"));
+  fixchart.fadeIn(1000);
+}
+
 function setCameraPosition(_llStart)
 {
   xzStartpunkt = latLon2XY(llNullPoint, _llStart);
@@ -613,6 +642,61 @@ function setCameraPosition(_llStart)
   tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
 }
+
+
+
+/*
+###############################
+
+  Calculate repeating Camera Movement
+  Removed, because of performance reasons
+
+###############################
+*/
+/*
+function getNewCameraRotation(_vector3)
+{
+    //Save Cameraposition
+    var oldRotationX = camera.rotation.x;
+    var oldRotationY = camera.rotation.y;
+    var oldRotationZ = camera.rotation.z;
+
+    //Create Vector3 as Target
+    var target = _vector3;
+
+    //Look at Point and store rotation
+    camera.lookAt(target);
+    var newRotationX = camera.rotation.x;
+    var newRotationY = camera.rotation.y;
+    var newRotationZ = camera.rotation.z;
+
+    //Set old Rotation
+    camera.rotation.set(oldRotationX, oldRotationY, oldRotationZ);
+
+    return {x: newRotationX, y: newRotationY, z: newRotationZ};
+}
+
+var cameraMovements = [];
+var lastCameraMovement = -1;
+
+function createCameraMovementTween()
+{
+  if(lastCameraMovement >= cameraMovements.length - 1)
+    lastCameraMovement = 0
+  else
+    lastCameraMovement++;
+
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+  .to({x: cameraMovements[lastCameraMovement].x, y: cameraMovements[lastCameraMovement].y, z: cameraMovements[lastCameraMovement].z}, 10000)
+  .easing(TWEEN.Easing.Quadratic.InOut)
+  .onComplete(function() {
+    setTimeout(createCameraMovementTween, 10);
+
+  })
+  .start();
+}
+*/
+
 
 function loadAirwaysJson(data)
 {
@@ -736,6 +820,42 @@ function loadData(_data)
 
 function renderTracks()
 {
+  trackGroup = new THREE.Group();
+  trackGroup.visible = false;
+  trackLineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff } );
+
+  //Loop all icao24
+  for(icao24 in data_icao24)
+  {
+    icao24 = data_icao24[icao24];
+    
+    //Add Mesh
+    icao24.geometry = new THREE.Geometry();
+    icao24.geometry.vertices.needsUpdate = true;
+    icao24.geometry.needsUpdate = true;
+
+    icao24.meshline = new THREE.Line( icao24.geometry, trackLineMaterial );
+
+    for(var i = 0; i <= icao24.series.length - 1; i++)
+    {
+      var vector = new THREE.Vector3(icao24.series[i].xz.x, icao24.series[i].altitude, icao24.series[i].xz.z)
+      icao24.series[i].vertice = vector;
+      icao24.geometry.vertices.push(vector);
+    }
+    trackGroup.add(icao24.meshline);
+  }
+
+  scene.add(trackGroup);
+  lastTrack = new Date();
+  lastTrack.setHours(0);
+  lastTrack.setMinutes(0);
+  lastTrack.setSeconds(0);
+}
+
+/*
+//Original. Objekte erzeugen, aber noch nicht zeichnen.
+function renderTracks()
+{
   //Loop all icao24
   for(icao24 in data_icao24)
   {
@@ -765,6 +885,7 @@ function renderTracks()
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
 }
+*/
 
 function renderTimeSerie(_timestamp)
 {
@@ -796,6 +917,7 @@ function renderTimeSerie(_timestamp)
     serie.icao24.geometry.verticesNeedUpdate = true;
   }
 }
+
 
 /*
 function getRandomColor() {
@@ -928,7 +1050,7 @@ function createTweensAndStart(_serie)
         serie.icao24.meshplane.visible = true;
 
         //Make Tween
-        serie.icao24.tween = new TWEEN.Tween(serie.icao24.meshplane.position)
+        serie.icao24.tween = new TWEEN.Tween(serie.icao24.meshplane.position, tweenGroupPoints)
           .to({x: serieNext.xz.x, y: serieNext.altitude, z: serieNext.xz.z}, 100);
 
         tweenArray.push(serie.icao24.tween);
@@ -962,16 +1084,26 @@ function createTweensAndStart(_serie)
 
 function animateTweenTracks()
 {
-  if(TWEEN.getAll().length > 0)
+  var doRender = false;
+  if(tweenGroupPoints.getAll().length > 0)
   {
-    requestAnimationFrame( animateTweenTracks );
-    TWEEN.update();
+    doRender = true;
+    tweenGroupPoints.update();
   }
   else 
   {
     //No more tweens. Calculate next.
     createTweensAndStart(lastTrack);
   }
+
+  if(tweenGroupCameras.getAll().length > 0)
+  {
+    doRender = true;
+    tweenGroupCameras.update();
+  }
+
+  if(doRender)
+    requestAnimationFrame( animateTweenTracks );
 
   renderer.render( scene, camera );
 }
@@ -1056,6 +1188,14 @@ function chapter_timelaps_slow()
   lastTrack.setSeconds(0);
   createTweensAndStart(lastTrack);
   $("#timeline").fadeIn();
+}
+
+function chapter_show_lines()
+{
+  //renderTracks();
+  trackGroup.visible = true;
+  trackLineMaterial.transparent = true;
+  trackLineMaterial.opacity = 0.5;
 }
 
 /*

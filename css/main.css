@@ -79,6 +79,27 @@ body
   width: 100%;
 }
 
+#fixchart
+{
+  position: fixed;
+  z-index: 103;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  max-width: 100%;
+  transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  display: none;
+}
+
+#fixchart img
+{
+  width: 100%;
+}
+
 #timeline_point
 {
   width: 15px;
