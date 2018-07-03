@@ -1,6 +1,7 @@
 /*
 
   ToDo:
+    Nearest Airport
     Resize. Three neu berechnen plus calculateScrollTop();
     Kameraposition nicht immer nach Norden
     Linien zeichenn optimieren!
@@ -62,9 +63,11 @@ var geocoder;
 //HTML-Varbiables
 var lastChapter;
 var chapterEvents = [];
+
 chapterEvents['chapter_startTHREE'] = startTHREEJS;
 chapterEvents['chapter_timelaps_slow'] = chapter_timelaps_slow;
 chapterEvents['chapter_show_lines'] = chapter_show_lines;
+
 var chapterScrolltop = [];
 
 /*
@@ -174,10 +177,15 @@ var cities = [
 
 ###############################
 */
-var airports = [];
-airports['Zürich'] = new LatLon(47.4608, 8.5546);
-airports['Genf'] = new LatLon(46.2373, 6.1081);
-airports['Basel'] = new LatLon(47.5985, 7.5262);
+var airports_features = {
+  "type": "FeatureCollection",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    { "type": "Feature", "properties": { "name": "zurich" }, "geometry": { "type": "Point", "coordinates": [ 8.5546, 47.4608 ] } },
+    { "type": "Feature", "properties": { "name": "geneva" }, "geometry": { "type": "Point", "coordinates": [ 6.1081, 46.2373 ] } },
+    { "type": "Feature", "properties": { "name": "bale" }, "geometry": { "type": "Point", "coordinates": [ 7.5262, 47.5985 ] } }
+  ]
+};
 
 /*
 ###############################
@@ -450,7 +458,7 @@ function prepareTHREEJS()
   skyOverlayTexture.repeat.set(1,1); 
 
   var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
-  skyOverlayMaterial = new THREE.MeshLambertMaterial({ map : skyOverlayTexture });
+  skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
   skyOverlayMaterial.transparent = true;
   skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
   skyOverlayPlane.material.side = THREE.DoubleSide;
@@ -567,6 +575,21 @@ function userPositionSelected()
     console.log("Geocoding failed");
     prepareHTMLGrid();
   });
+
+  //Calculate nearest Airports
+  var airports = getNearestAirport(llStartpunkt, 2);
+
+  // TODO
+
+  //Prepare Airport 1
+  var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + airports[0].properties.name);
+  ap1.show();
+  ap1.text($(this).text().replace(new RegExp("{airport_1_distance}", 'g'), airports[0].properties.distanceToPoint));
+  
+  //Prepare Airport 2
+  var ap1 = $("#chapter_airport_2 .airport_" + airports[1].properties.name);
+  ap1.show();
+  ap1.text($(this).text().replace(new RegExp("{airport_2_distance}", 'g'), airports[1].properties.distanceToPoint));
 }
 
 function prepareHTMLGrid(_placeName)
@@ -753,6 +776,48 @@ function getNearestLines(_source, _max)
   }
   return results;
 }
+
+function getNearestAirport(_source, _max)
+{
+  //Copy Geojson
+  var tmpLines = airports_features;
+
+  //Exclude Lines
+  var exclude_lines = [];
+
+  //Create Turf-Point
+  var pt = turf.point([_source.lon, _source.lat]);
+
+  //Create Result-List
+  var results = [];
+
+  //Run x times
+  for(var i = 0; i < _max; i++)
+  {
+    //Delete all points, which are already found
+    for(var n = tmpLines.features.length - 1; n >= 0; n--)
+    {
+      //Loop each exclude_lines
+      var name = tmpLines.features[n].properties.name;
+      for(var excl_line = 0; excl_line < exclude_lines.length; excl_line++)
+      {
+        if(name == exclude_lines[excl_line])
+        {
+          //Remove
+          tmpLines.features.splice(n, 1);
+          break;
+        }
+      }
+    }
+
+    //Now find nearest point
+    var res = turf.nearestPoint(pt, tmpLines);
+    results.push(res);
+    exclude_lines.push(res.properties.name);
+  }
+  return results;
+}
+
 
 function loadData(_data)
 {

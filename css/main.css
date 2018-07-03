@@ -132,3 +132,19 @@ body
   position: relative;
   display: none;
 }
+
+.imageright
+{
+  float: right;
+  height: 100%;
+  padding: 10px;
+}
+
+.clearfix {
+  overflow: auto;
+}
+
+.airport_zurich, .airport_geneva, .airport_bale
+{
+  display: none;
+}
