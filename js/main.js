@@ -1,10 +1,11 @@
 /*
 
   ToDo:
+    Event nur einmal ausführen
     Nearest Airport
     Resize. Three neu berechnen plus calculateScrollTop();
     Kameraposition nicht immer nach Norden
-    Linien zeichenn optimieren!
+    Dunkel werden
 
 */
 var testobject;
@@ -34,6 +35,7 @@ data_icao24 = []
 
 //Airways-Lines as points
 var airways_lines;
+var nearest_airways;
 
 //Loader count
 var loaderCounter = 0;
@@ -45,10 +47,10 @@ var llNullPoint = new LatLon(45.4, 5.8);
 var llNEPoint = new LatLon(49.052, 11.001);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
 
-var llFlughafen = new LatLon(47.454588, 8.555721);
-var llLuzern = new LatLon(47.055046, 8.305300);
-var llZurich = new LatLon(47.372084, 8.540693);
-var llGenf = new LatLon(46.202770, 6.148037);
+//var llFlughafen = new LatLon(47.454588, 8.555721);
+//var llLuzern = new LatLon(47.055046, 8.305300);
+//var llZurich = new LatLon(47.372084, 8.540693);
+//var llGenf = new LatLon(46.202770, 6.148037);
 
 var llStartpunkt = llMittelpunkt;
 var controls;
@@ -64,9 +66,17 @@ var geocoder;
 var lastChapter;
 var chapterEvents = [];
 
-chapterEvents['chapter_startTHREE'] = startTHREEJS;
-chapterEvents['chapter_timelaps_slow'] = chapter_timelaps_slow;
-chapterEvents['chapter_show_lines'] = chapter_show_lines;
+chapterEvents['#chapter_startTHREE'] = chapter_startTHREE;
+chapterEvents['#chapter_timelaps_slow'] = chapter_timelaps_slow;
+chapterEvents['#chapter_airport_1'] = chapter_airport_1;
+chapterEvents['#chapter_airport_2'] = chapter_airport_2;
+chapterEvents['#chapter_nearest_airway_0'] = chapter_nearest_airway_0;
+chapterEvents['#chapter_nearest_airway_1'] = chapter_nearest_airway_1;
+chapterEvents['#chapter_nearest_airway_2'] = chapter_nearest_airway_2;
+chapterEvents['#chapter_after_airways'] = chapter_after_airways;
+chapterEvents['#chapter_show_lines'] = chapter_show_lines;
+chapterEvents['#chapter_load_heatmap'] = chapter_load_heatmap;
+
 
 var chapterScrolltop = [];
 
@@ -90,22 +100,22 @@ var cities = [
   },
   {
     "id": "winterthur",
-    "img": "winterthur.png",
+    "img": "leer.png",
     "latlon": new LatLon(47.500399, 8.724567)
   },
   {
     "id": "stgallen",
-    "img": "stgallen.png",
+    "img": "leer.png",
     "latlon": new LatLon(47.421097, 9.375037)
   },
   {
     "id": "konstanz",
-    "img": "konstanz.png",
+    "img": "leer.png",
     "latlon": new LatLon(47.663340, 9.170435)
   },
   {
     "id": "schaffhausen",
-    "img": "schaffhausen.png",
+    "img": "leer.png",
     "latlon": new LatLon(47.692347, 8.635310)
   },
   {
@@ -115,22 +125,22 @@ var cities = [
   },
   {
     "id": "biel",
-    "img": "Biel",
+    "img": "leer.png",
     "latlon": new LatLon(47.137394, 7.248539)
   },
   {
     "id": "neuenburg",
-    "img": "neuenburg.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.992260, 6.910098)
   },
   {
     "id": "yverdon-les-bains",
-    "img": "yverdon-les-bains.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.783100, 6.640909)
   },
   {
     "id": "lausanne",
-    "img": "lausanne.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.518534, 6.628543)
   },
   {
@@ -140,35 +150,36 @@ var cities = [
   },
   {
     "id": "zermatt",
-    "img": "zermatt.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.018972, 7.748883)
   },
   {
     "id": "visp",
-    "img": "visp.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.296203, 7.881271)
   },
   {
     "id": "sion",
-    "img": "sion.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.233313, 7.359701)
   },
   {
     "id": "chur",
-    "img": "chur.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.856793, 9.548603)
   },
   {
     "id": "stmoritz",
-    "img": "stmoritz.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.488049, 9.834390)
   },
   {
     "id": "davos",
-    "img": "davos.png",
+    "img": "leer.png",
     "latlon": new LatLon(46.801325, 9.827914)
   }
 ];
+
 
 /*
 ###############################
@@ -177,6 +188,7 @@ var cities = [
 
 ###############################
 */
+nearest_airports = [];
 var airports_features = {
   "type": "FeatureCollection",
   "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
@@ -185,6 +197,48 @@ var airports_features = {
     { "type": "Feature", "properties": { "name": "geneva" }, "geometry": { "type": "Point", "coordinates": [ 6.1081, 46.2373 ] } },
     { "type": "Feature", "properties": { "name": "bale" }, "geometry": { "type": "Point", "coordinates": [ 7.5262, 47.5985 ] } }
   ]
+};
+
+/*
+###############################
+
+  AIRWAYS
+
+###############################
+*/
+
+var airways_text = [];
+airways_text['un869'] = {
+  "title": "Auf zur Sonne",
+  "text": "Lust auf Sonne, Croissant oder Ibérico-Schinken? Gestartet im bayrischen Nürnberg, verläuft die UN869 über Basel quer durch die Schweiz, vorbei an Biel und Neuenburg. In Genf verlässt sie die Schweiz Richtung Frankreich.<br />Über Toulouse geht die Reise weiter nach Spanien. In der Nähe von Madrid vereint sich die UN869 mit der UL27, um im spanischen Málaga ans Ziel zu kommen."
+};
+airways_text['un871'] = {
+  "title": "Fertig Ferien",
+  "text": "Nach sonnigen Wochen auf Gran Canaria bringt die UN871 sonnenverwöhnte Touristen zurück in die Heimat. Von der Insel Gran Canaria verläuft die Route nahe am marokkanischen Festland über Lanzarote. Bei der marokkanischen Stadt Essaouira trifft sie auf Festland, um im Norden kurz den Atlantischen Ozean zu streifen. Nächstes Reiseziel: Spanien. Nach einer Tour de España durchquert die UN871 Frankreich. Toulouse und Grenoble heissen nur einige Stationen. Parallel zur UN869 tritt sie über dem Genfersee in den Schweizer Luftraum ein, um in Zürich Passagiere abzuladen. Weiter gehts über München nach Polen, um in Augustow zu enden."
+};
+airways_text['ul613'] = {
+  "title": "Einmal London bitte",
+  "text": "Die UL613 ist der schnellste Weg zur Queen. Im italienischen Bozen beginnt die Luftroute. Bei Scuol tritt sie in den Schweizer Luftraum ein, um ihn bei Basel wieder zu verlassen. Im französischen Rolampont dreht die UL613 nördlich, um bei Calais den Ärmelkanal zu überqueren. London wird gestreift. Einmal quer durch Schottland endet die UL613 im Meer zwischen Schottland und den Färöerinseln."
+};
+airways_text['un850'] = {
+  "title": "Touristenexpress auf die Insel",
+  "text": "Mallorca ist berüchtigt als deutsche Touristeninsel. Die Flugautobahn nach Mallorca verläuft dabei quer über die Schweiz. Ganz im Norden Deutschlands, in der Hansestadt Lübeck, startet die UN850. Nach Frankfurt und Karlsruhe verläuft die Route über Zürich durch die Innerschweiz quer durch die Schweiz. Im Tessin geht es raus nach Italien. Auf Genua folgt das Ligurische Meer. Korsika blitzt unter den Flügeln auf. Schliesslich endet die UN850 in der Nähe von Mallorca."
+};
+airways_text['uz670'] = {
+  "title": "Kein Stau am Himmel",
+  "text": "Wenn der Touristenexpress UN850 nach Mallorca überlastet ist, hat die UZ670 ihren grossen Einsatz. Als «Umfahrungsstrasse» führt sie von Zürich parallel zur UN850 quer durch die Schweiz und endet an der schweizerisch-italienischen Grenze. Von dort ist es nur noch ein Katzensprung nach Mailand. "
+};
+airways_text['un851'] = {
+  "title": "Zurück zur Arbeit",
+  "text": "Während die UN850 sonnenhungrige Touristen nach Mallorca führt, bringt die UN851 sonnengebräunte Touristen zurück nach Hause. Gestartet an der spanischen Atlantikküste in der Nähe von Cádiz verläuft sie über Málaga nach Mallorca und Korsika. Nach dem Ligurischen Meer trifft sie bei Genua auf italienisches Festland. Einmal quer durchs Tessin bis nach Zürich heisst es nun. Quer durch Deutschland über Würzburg nach Hannover verläuft die UN851, um bei der Ostsee in Lübeck zu enden."
+};
+airways_text['ul856'] = {
+  "title": "Mozartkugeln mit Senf",
+  "text": "Im Geburtsort von Mozart – im österreichischen Salzburg – startet die UL856. Über Deutschland tritt sie beim Bodensee in den Schweizer Luftraum ein. Nach Zürich und Basel endet sie im französischen Dijon."
+};
+airways_text['y100'] = {
+  "title": "Umfahrungsstrasse",
+  "text": "Wenn der Touristenexpress UN850 nach Mallorca überlastet ist, hat die UZ670 ihren grossen Einsatz. Als «Umfahrungsstrasse» führt sie von Zürich parallel zur UN850 quer durch die Schweiz und endet an der schweizerisch-italienischen Grenze. Von dort ist es nur noch ein Katzensprung nach Mailand. "
 };
 
 /*
@@ -279,7 +333,6 @@ $(document).ready( function() {
 
     renderer.render(bufferScene, camera, rendertarget);
     renderer.render( scene, camera );
-
   });
 
 
@@ -371,7 +424,7 @@ function prepareTHREEJS()
 {
   xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
-  xzLuzern = latLon2XY(llNullPoint, llLuzern);
+  //xzLuzern = latLon2XY(llNullPoint, llLuzern);
 
   textureLoader = new THREE.TextureLoader();
 
@@ -461,6 +514,7 @@ function prepareTHREEJS()
   skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
   skyOverlayMaterial.transparent = true;
   skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
+  skyOverlayPlane.material.depthTest = false;
   skyOverlayPlane.material.side = THREE.DoubleSide;
   skyOverlayPlane.position.set(xzMittelpunkt.x, km(30), xzMittelpunkt.z);
   skyOverlayPlane.rotation.x = - Math.PI / 2;
@@ -487,7 +541,7 @@ function prepareTHREEJS()
     */
 
     //Create Sprite
-    var spriteMap = textureLoader.load( "mesh/luzern.png" );
+    var spriteMap = textureLoader.load( "labels/" + e.img );
     var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
     e.sprite = new THREE.Sprite( spriteMaterial );
     e.sprite.scale.set(4096, 4096, 1);
@@ -514,6 +568,21 @@ function rotateCamera(_x, _y, _z, _duration)
   new TWEEN.Tween(camera.rotation, tweenGroupCameras)
     .to({x: _x, y: _y, z: _z}, _duration)
     .easing(TWEEN.Easing.Cubic.Out)
+    .start();
+
+  animateTween();
+}
+
+function rotateCameraPauseTween(_x, _y, _z, _duration)
+{
+  stopTweenTracks();
+
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+    .to({x: _x, y: _y, z: _z}, _duration)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(function() {
+      resumeTweenTracks();
+    })
     .start();
 
   animateTween();
@@ -577,19 +646,55 @@ function userPositionSelected()
   });
 
   //Calculate nearest Airports
-  var airports = getNearestAirport(llStartpunkt, 2);
+  nearest_airports = getNearestAirport(llStartpunkt, 2);
 
-  // TODO
+  //Copy Airport-section in HTML
+  $(".chapter_airport").clone().insertAfter(".chapter_airport");
 
   //Prepare Airport 1
-  var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + airports[0].properties.name);
-  ap1.show();
-  ap1.text($(this).text().replace(new RegExp("{airport_1_distance}", 'g'), airports[0].properties.distanceToPoint));
+  var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name + " span");
+  ap1.each(function(e) {
+    $(this).text($(this).text().replace(new RegExp("{airport_1_distance}", 'g'), Math.round(nearest_airports[0].properties.distanceToPoint)));
+  });
+  $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name).show();
+  $(".airport_destination_1 .chapter_content .airport_" + nearest_airports[0].properties.name).show();
   
+
   //Prepare Airport 2
-  var ap1 = $("#chapter_airport_2 .airport_" + airports[1].properties.name);
-  ap1.show();
-  ap1.text($(this).text().replace(new RegExp("{airport_2_distance}", 'g'), airports[1].properties.distanceToPoint));
+  var ap1 = $("#chapter_airport_2 .chapter_content .airport_" + nearest_airports[1].properties.name + " span");
+  ap1.each(function(e) {
+    $(this).text($(this).text().replace(new RegExp("{airport_2_distance}", 'g'), Math.round(nearest_airports[1].properties.distanceToPoint)));
+  });
+  $("#chapter_airport_2 .chapter_content .airport_" + nearest_airports[1].properties.name).show();
+  $(".airport_destination_2 .chapter_content .airport_" + nearest_airports[1].properties.name).show();
+
+  //Calculate nearest Airways
+  nearest_airways = getNearestLines(llStartpunkt, 3);
+  
+  //Set Intro text
+  var intro = $(".airways_intro");
+  intro.html(intro.html().replace(new RegExp("{airway_1_name}", 'g'), nearest_airways[0].properties.name.toUpperCase()));
+  intro.html(intro.html().replace(new RegExp("{airway_1_distance}", 'g'), Math.round(nearest_airways[0].properties.distanceToPoint)));
+  
+  intro.html(intro.html().replace(new RegExp("{airway_2_name}", 'g'), nearest_airways[1].properties.name.toUpperCase()));
+  intro.html(intro.html().replace(new RegExp("{airway_2_distance}", 'g'), Math.round(nearest_airways[1].properties.distanceToPoint)));
+
+  intro.html(intro.html().replace(new RegExp("{airway_3_name}", 'g'), nearest_airways[2].properties.name.toUpperCase()));
+  intro.html(intro.html().replace(new RegExp("{airway_3_distance}", 'g'), Math.round(nearest_airways[2].properties.distanceToPoint)));
+
+  //Fill airways
+  fillAirwayDiv(0);
+  fillAirwayDiv(1);
+  fillAirwayDiv(2);
+}
+
+function fillAirwayDiv(_nr)
+{
+  aw = airways_text[nearest_airways[_nr].properties.name];
+  $(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").text(aw.title);
+  $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").addClass("color_" + nearest_airways[_nr].properties.name);
+  $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").text(nearest_airways[_nr].properties.name.toUpperCase());
+  $(".chapter_airways_" + _nr + " .chapter_content .route_text").text(aw.text);
 }
 
 function prepareHTMLGrid(_placeName)
@@ -652,7 +757,7 @@ function calculateScrollTop()
   for (var k in keys)
   {
     var keyname = keys[k];
-    var offset = $("#" + keyname).offset().top - scrollOffset;
+    var offset = $(keyname).offset().top - scrollOffset;
     chapterScrolltop[keyname] = offset;
   }
 }
@@ -910,7 +1015,7 @@ function renderTracks()
 
     for(var i = 0; i <= icao24.series.length - 1; i++)
     {
-      var vector = new THREE.Vector3(icao24.series[i].xz.x, icao24.series[i].altitude, icao24.series[i].xz.z)
+      var vector = new THREE.Vector3(icao24.series[i].xz.x, km(15)/*icao24.series[i].altitude*/, icao24.series[i].xz.z)
       icao24.series[i].vertice = vector;
       icao24.geometry.vertices.push(vector);
     }
@@ -1161,6 +1266,7 @@ function createTweensAndStart(_serie)
   }
 }
 
+var animationCanRun = true;
 function animateTweenTracks()
 {
   var doRender = false;
@@ -1172,14 +1278,17 @@ function animateTweenTracks()
   else 
   {
     //No more tweens. Calculate next.
-    createTweensAndStart(lastTrack);
+    if(animationCanRun)
+      createTweensAndStart(lastTrack);
   }
 
+  /*
   if(tweenGroupCameras.getAll().length > 0)
   {
     doRender = true;
     tweenGroupCameras.update();
   }
+  */
 
   if(doRender)
     requestAnimationFrame( animateTweenTracks );
@@ -1187,6 +1296,18 @@ function animateTweenTracks()
   renderer.render( scene, camera );
 }
 
+function stopTweenTracks()
+{
+  animationCanRun = false;
+}
+
+function resumeTweenTracks()
+{
+  animationCanRun = true;
+  createTweensAndStart(lastTrack);
+}
+
+/*
 function animateIntern()
 {
 
@@ -1219,7 +1340,6 @@ function animateIntern()
   console.log(delta);
 }
 
-
 function animate() {
 
   requestAnimationFrame( animate );
@@ -1227,6 +1347,7 @@ function animate() {
 
   renderer.render( scene, camera );
 }
+*/
 
 function render()
 {
@@ -1241,7 +1362,7 @@ function render()
 ###############################
 */
 
-function startTHREEJS()
+function chapter_startTHREE()
 {
   //Register event after flying
   map.once('moveend', function() {
@@ -1292,12 +1413,129 @@ function chapter_timelaps_slow()
   $("#timeline").fadeIn();
 }
 
+function chapter_show_lines_animate_opacity()
+{
+  if(tweenGroupCameras.getAll().length > 0)
+  {
+    tweenGroupCameras.update();
+    requestAnimationFrame( chapter_show_lines_animate_opacity );
+  }
+  renderer.render( scene, camera );
+}
+
 function chapter_show_lines()
 {
-  //renderTracks();
+  console.log("lines");
+  stopTweenTracks();
   trackGroup.visible = true;
   trackLineMaterial.transparent = true;
-  trackLineMaterial.opacity = 0.5;
+  trackLineMaterial.opacity = 0;
+
+  new TWEEN.Tween(trackLineMaterial, tweenGroupCameras)
+    .to({opacity: 0.5}, 2000)
+    //.easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(function() {
+      setTimeout(resumeTweenTracks, 0);
+    })
+    .start();
+
+  chapter_show_lines_animate_opacity();
+
+}
+
+function chapter_airport_internal(_nr)
+{
+  //stopTweenTracks();
+  var llAirport = new LatLon(nearest_airports[_nr].geometry.coordinates[1], nearest_airports[_nr].geometry.coordinates[0]);
+  xzAirport = latLon2XY(llNullPoint, llAirport);
+
+  var newRotation = getNewCameraRotation(new THREE.Vector3(xzAirport.x, groundAltitude + 2, xzAirport.z));
+
+  rotateCameraPauseTween(camera.rotation.x, newRotation.y, camera.rotation.z, 2000);
+  /*
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+    .to({y: newRotation.y}, 2000)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(function() {
+      console.log("Resume Tween");
+      resumeTweenTracks();
+    })
+    .start();
+
+  animateTween();
+  */
+}
+
+function chapter_airport_1()
+{
+  chapter_airport_internal(0);
+}
+
+function chapter_airport_2()
+{
+  chapter_airport_internal(1);
+}
+
+function moveCameraToAirway(_nr)
+{
+  xzAirwayPoint = latLon2XY(llNullPoint, new LatLon(nearest_airways[_nr].geometry.coordinates[1], nearest_airways[_nr].geometry.coordinates[0]));
+  var newRotation = getNewCameraRotation(new THREE.Vector3(xzAirwayPoint.x, skyOverlayPlane.position.y, xzAirwayPoint.z));
+  rotateCameraPauseTween(newRotation.x, newRotation.y, newRotation.z, 2000);
+}
+
+function chapter_nearest_airway_0()
+{
+  moveCameraToAirway(0);
+}
+
+function chapter_nearest_airway_1()
+{
+  moveCameraToAirway(1);
+}
+
+function chapter_nearest_airway_2()
+{
+  moveCameraToAirway(2);
+}
+
+function chapter_after_airways()
+{
+  var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 20));
+  //rotateCameraPauseTween(newRotation.x, newRotation.y, newRotation.z, 2000);
+}
+
+function chapter_load_heatmap()
+{
+  map.once("data", function() {
+    console.log("data");
+  });
+
+  map.once("load", function() {
+    console.log("data");
+  });
+  map.setStyle('mapbox://styles/blick-storytelling/cjj8gspfu3ave2slhtb37oemg');
+  stopTweenTracks();
+  $("#threejs").fadeOut();
+  $("#map").fadeIn();
+
+  //Enable Interactivity from Mapbox
+  map.boxZoom.enable();
+  map.scrollZoom.enable();
+  map.dragPan.enable();
+  map.dragRotate.enable();
+  map.keyboard.enable();
+  map.doubleClickZoom.enable();
+  map.touchZoomRotate.enable();
+
+  map.flyTo({
+    center: [llMittelpunkt.lon, llMittelpunkt.lat],
+    pitch: 0,
+    zoom: 8,
+    duration: 1000,
+    bearing: 0
+  });
+
+  //map.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
 }
 
 /*
@@ -1307,8 +1545,8 @@ function chapter_show_lines()
 
 ###############################
 */
-
 function km(_km)
+
 {
   return _km * 1000;
 }

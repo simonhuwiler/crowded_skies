@@ -140,6 +140,14 @@ body
   padding: 10px;
 }
 
+.imagecenter
+{
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block
+}
+
 .clearfix {
   overflow: auto;
 }
@@ -147,4 +155,57 @@ body
 .airport_zurich, .airport_geneva, .airport_bale
 {
   display: none;
+}
+
+.label_route
+{
+  color: #ffffff;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 5px;
+  font-size: 0.5em;
+  vertical-align: middle;
+  margin-right: 6px;
+  position: relative;
+  top: -4px;
+}
+
+.color_ul613
+{
+  background-color: #e06933;
+}
+
+.color_un869
+{
+  background-color: #e9a007;
+}
+
+.color_un850
+{
+  background-color: #c63a88;
+}
+
+.color_un851
+{
+  background-color: #72428b;
+}
+
+.color_y100
+{
+  background-color: #00438d;
+}
+
+.color_un856
+{
+  background-color: #8ea83f;
+}
+
+.color_uz670
+{
+  background-color: #00438d;
+}
+
+.color_un871
+{
+  background-color: #156e4b;
 }
