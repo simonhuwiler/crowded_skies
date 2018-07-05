@@ -1,7 +1,10 @@
 /*
 
   ToDo:
-    Tag / Nacht-Verlauf
+    Nearest Airport
+    Resize. Three neu berechnen plus calculateScrollTop();
+    Kameraposition nicht immer nach Norden
+    Linien zeichenn optimieren!
 
 */
 var testobject;
@@ -13,6 +16,14 @@ https://threejs.org/examples/webgl_lights_hemisphere.html
 http://aip.engadin-airport.ch/eAIP/2017-04-27/html/eAIP/LS-ENR-3.3-en-CH.html#ENR33-RDESIG-UN850
 http://aip.engadin-airport.ch/eAIP/2017-05-25/pdf/U-ERC.pdf
 
+*/
+
+/*
+###############################
+
+  GLOBAL VARS
+
+###############################
 */
 
 //Data by timestamp
@@ -42,7 +53,30 @@ var llGenf = new LatLon(46.202770, 6.148037);
 var llStartpunkt = llMittelpunkt;
 var controls;
 var lastTrack;
+var trackGroup;
+var trackLineMaterial;
 
+//Mapbox Variables
+var map;
+var geocoder;
+
+//HTML-Varbiables
+var lastChapter;
+var chapterEvents = [];
+
+chapterEvents['chapter_startTHREE'] = startTHREEJS;
+chapterEvents['chapter_timelaps_slow'] = chapter_timelaps_slow;
+chapterEvents['chapter_show_lines'] = chapter_show_lines;
+
+var chapterScrolltop = [];
+
+/*
+###############################
+
+  CITIES
+
+###############################
+*/
 var cities = [
   {
     "id": "luzern",
@@ -136,8 +170,42 @@ var cities = [
   }
 ];
 
-var renderer, scene, camera, textureLoader, sky, skyMat;
+/*
+###############################
+
+  AIRPORTS
+
+###############################
+*/
+var airports_features = {
+  "type": "FeatureCollection",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    { "type": "Feature", "properties": { "name": "zurich" }, "geometry": { "type": "Point", "coordinates": [ 8.5546, 47.4608 ] } },
+    { "type": "Feature", "properties": { "name": "geneva" }, "geometry": { "type": "Point", "coordinates": [ 6.1081, 46.2373 ] } },
+    { "type": "Feature", "properties": { "name": "bale" }, "geometry": { "type": "Point", "coordinates": [ 7.5262, 47.5985 ] } }
+  ]
+};
+
+/*
+###############################
+
+  THREEJS VARS
+
+###############################
+*/
+var renderer, scene, camera, textureLoader, sky, skyMat, ground;
+var tweenGroupPoints = new TWEEN.Group();
+var tweenGroupCameras = new TWEEN.Group();
 var rendertarget, bufferScene;
+
+/*
+###############################
+
+  READY VOID()
+
+###############################
+*/
 
 $(document).ready( function() {
 
@@ -147,10 +215,18 @@ $(document).ready( function() {
   });
 
   $("#doit").on("click", function() {
-    console.log("doit");
-    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, -200, xzStartpunkt.z));
-    camera.position.y = km(200);
-    renderer.render( scene, camera );
+    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x + 4, camera.position.y + 5, camera.position.z - 20)));
+    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x - 4, camera.position.y + 5, camera.position.z - 20)));
+    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 1)));
+
+    createCameraMovementTween();
+    //Tween
+    //new TWEEN.Tween(camera.rotation, tweenGroupCameras).to({x: newRotationX, y: newRotationY, z: newRotationZ}, 2000);
+
+
+    //animateTweenTracks();
+    //chapter_show_lines();
+    
   });
 
   $("#doitback").on("click", function() {
@@ -186,7 +262,6 @@ $(document).ready( function() {
     scene.add( testobject );
     bufferScene.add( testobject );
 
-
     //Create Bildschirm
     var fadeMaterial = new THREE.MeshBasicMaterial({
       //color: 0xffcc00,
@@ -218,8 +293,6 @@ $(document).ready( function() {
 
   });
 
-  
-
   $("#play").on("click", function(e) {
     animateLines();
   });  
@@ -228,6 +301,9 @@ $(document).ready( function() {
   });
 
   $("#count").on("click", function() {
+    renderTracks();
+    render();
+    return;
     console.log("count");
     var doIt = true;
     while(doIt)
@@ -240,6 +316,36 @@ $(document).ready( function() {
     }
     renderer.render( scene, camera );
     console.log("fertig");
+  });
+
+  $("#cameratest").on("click", function() {
+
+    prepareHTMLGrid();
+
+  });
+
+
+  $("#setPosition").on("click", function() {
+    userPositionSelected();
+  });
+
+  //PrepareMapbox
+  loaderAddCount();
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg';
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/blick-storytelling/cjg6dbhus2vf32sp53s358gud',
+    minZoom: 7,
+    maxZoom: 20,
+    center: [8.272616, 46.668562],
+    zoom: 7
+    //maxBounds: [[4.730304, 44.300666], [12.021820, 48.831744]]
+  });
+
+  map.on('load', function() {
+    map.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
+    loaderRemoveCount(); //Mapbox
+    $("#target").show();
   });
 
   //Prepare THREEJS
@@ -281,7 +387,8 @@ function prepareTHREEJS()
   //renderer.gammaInput = true;
   //renderer.gammaOutput = true;
   //renderer.shadowMap.enabled = true;
-  document.body.appendChild( renderer.domElement );
+  //document.body.appendChild( renderer.domElement );
+  $("#threejs").append(renderer.domElement);
 
   //TEST RENDERTARGET
   /*
@@ -293,24 +400,31 @@ function prepareTHREEJS()
   //Init Lights
 
   //Init HemisphereLight (color Fading)
-  hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-  hemiLight.color.setHSL( 0.6, 1, 0.6 );
-  hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  hemiLight = new THREE.HemisphereLight( 0x0c4fd7, 0xa7bdea, 1 );
+  //hemiLight.color.setHSL( 0.6, 1, 0.6 );
+  //hemiLight.color.setHex(0xffcc00);
+  //hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  //hemiLight.groundColor.setHex(0x000000);
   hemiLight.position.set( 0, km(100), 0 );
-  scene.add( hemiLight );
+  //scene.add( hemiLight );
 
   //Add Sun
-  dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-  dirLight.color.setHSL( 0.1, 1, 0.55 );
+  dirLight = new THREE.DirectionalLight( 0xffffff, 0.2 );
+  
+  //dirLight.color.setHSL( 0.1, 1, 0.55 );
   dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
-  //scene.add( dirLight );
+  scene.add( dirLight );
 
   //Add ground
   var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
-  var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
-  groundMat.color.setHSL( 0.095, 1, 0.75 );
+  //var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 });
+  var groundMat = new THREE.MeshPhongMaterial( { color: 0xf2f2f1, specular: 0xf2f2f1 });
 
-  var ground = new THREE.Mesh( groundGeo, groundMat );
+  
+  //groundMat.color.setHSL( 0.095, 1, 0.75 );
+  groundMat.color.setHex(0xf2f2f1);
+
+  ground = new THREE.Mesh( groundGeo, groundMat );
   ground.rotation.x = - Math.PI / 2;
   ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
   ground.receiveShadow = true;
@@ -321,7 +435,8 @@ function prepareTHREEJS()
   var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
   var uniforms = {
     topColor:    { value: new THREE.Color( 0x0077ff ) },
-    bottomColor: { value: new THREE.Color( 0xffffff ) },
+    bottomColor: { value: new THREE.Color( 0x000000 ) },
+    //bottomColor: { value: new THREE.Color( 0xffffff ) },
     offset:      { value: 33 },
     exponent:    { value: 0.6 }
   };
@@ -331,7 +446,6 @@ function prepareTHREEJS()
 
   var skyGeo = new THREE.SphereBufferGeometry( km(300), 32, 15 );
   skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
-  console.log(skyMat);
 
   sky = new THREE.Mesh( skyGeo, skyMat );
   sky.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
@@ -344,11 +458,11 @@ function prepareTHREEJS()
   skyOverlayTexture.repeat.set(1,1); 
 
   var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
-  skyOverlayMaterial = new THREE.MeshLambertMaterial({ map : skyOverlayTexture });
+  skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
   skyOverlayMaterial.transparent = true;
   skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
   skyOverlayPlane.material.side = THREE.DoubleSide;
-  skyOverlayPlane.position.set(xzMittelpunkt.x, km(50), xzMittelpunkt.z);
+  skyOverlayPlane.position.set(xzMittelpunkt.x, km(30), xzMittelpunkt.z);
   skyOverlayPlane.rotation.x = - Math.PI / 2;
   skyOverlayPlane.receiveShadow = false;
   scene.add( skyOverlayPlane );
@@ -356,22 +470,24 @@ function prepareTHREEJS()
 
   //Add Fix Points (Cities)
   cities.forEach(function(e) {
+    //Calculate XZ
+    xzE = latLon2XY(llNullPoint, e.latlon);
+
+    /*
     //Create Geometry
     e.geometry = new THREE.BoxGeometry( km(1), km(1), km(1) );
 
     //Create Mataerial
     e.material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
 
-    //Calculate XZ
-    xzE = latLon2XY(llNullPoint, e.latlon);
-
     //Create Mesh
     e.mesh = new THREE.Mesh( e.geometry, e.material );
     e.mesh.position.set(xzE.x, groundAltitude + getHalfHeightOfObject(e.mesh), xzE.z);
     scene.add( e.mesh );
+    */
 
     //Create Sprite
-    var spriteMap = textureLoader.load( "mesh/stadt.png" );
+    var spriteMap = textureLoader.load( "mesh/luzern.png" );
     var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
     e.sprite = new THREE.Sprite( spriteMaterial );
     e.sprite.scale.set(4096, 4096, 1);
@@ -393,13 +509,224 @@ function prepareTHREEJS()
   scene.add(tmpMesh);
 }
 
+function rotateCamera(_x, _y, _z, _duration)
+{
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+    .to({x: _x, y: _y, z: _z}, _duration)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .start();
+
+  animateTween();
+}
+
+function animateTween()
+{
+  if(tweenGroupCameras.getAll().length > 0)
+  {
+    requestAnimationFrame( animateTween );
+    tweenGroupCameras.update();
+  }
+  else 
+  {
+    //No more tweens. Calculate next.
+    console.log("Ended");
+  }
+
+  renderer.render( scene, camera );
+}
+
+function userPositionSelected()
+{
+  //Change UI
+  $("#target").hide();
+  $("#wait_after_locate").show();
+
+  //Remove Interactivity from Mapbox
+  map.boxZoom.disable();
+  map.scrollZoom.disable();
+  map.dragPan.disable();
+  map.dragRotate.disable();
+  map.keyboard.disable();
+  map.doubleClickZoom.disable();
+  map.touchZoomRotate.disable();
+
+  //Set Startpoint and make a first Render
+  llStartpunkt = new LatLon(map.getCenter().lat, map.getCenter().lng);
+  setCameraPosition(llStartpunkt);
+  //camera.rotation.x = 0.9;
+  render();
+
+  //Geocode Position
+  var url = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + llStartpunkt.lon + "," + llStartpunkt.lat + ".json?access_token=" + mapboxgl.accessToken;
+  $.get(url, {country: 'ch', types: 'place'},function(data){
+    if(data.features.length > 0)
+    {
+      //Data retrieved
+      prepareHTMLGrid(data.features[0].text);
+    }
+    else
+    {
+      //Ups, no data. Take a neutral name
+      prepareHTMLGrid();
+    }
+  })
+  .fail(function() {
+    //Geocoding failed
+    console.log("Geocoding failed");
+    prepareHTMLGrid();
+  });
+
+  //Calculate nearest Airports
+  var airports = getNearestAirport(llStartpunkt, 2);
+
+  // TODO
+
+  //Prepare Airport 1
+  var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + airports[0].properties.name);
+  ap1.show();
+  ap1.text($(this).text().replace(new RegExp("{airport_1_distance}", 'g'), airports[0].properties.distanceToPoint));
+  
+  //Prepare Airport 2
+  var ap1 = $("#chapter_airport_2 .airport_" + airports[1].properties.name);
+  ap1.show();
+  ap1.text($(this).text().replace(new RegExp("{airport_2_distance}", 'g'), airports[1].properties.distanceToPoint));
+}
+
+function prepareHTMLGrid(_placeName)
+{
+  if(_placeName != "" && _placeName != undefined)
+  {
+    //Show labels
+    $(".has_place").show();
+    $(".has_no_place").hide();
+
+    //Replace by placeName
+    $(".has_place").each(function(e) {
+      $(this).text($(this).text().replace(new RegExp("{place_name}", 'g'), _placeName));
+    });
+  }
+  else
+  {
+    $(".has_place").hide();
+    $(".has_no_place").show();
+  }
+  $("#wait_after_locate").hide();
+  $("#content").fadeIn(400, function() {
+    //Register Scrollevents after FadeIn
+
+    //Calculate all scrolltops. Bether than calculate each time
+    calculateScrollTop();
+
+    //Register Event
+    $(document).scroll(function() {
+      scrollTop = $(document).scrollTop();
+      for(k in chapterScrolltop)
+      {
+        if(scrollTop >= chapterScrolltop[k])
+        {
+          if(lastChapter != k)
+          {
+            //Run event
+            lastChapter = k;
+            chapterEvents[k]();
+          }
+          break;
+        }
+      }
+    });
+  });
+}
+
+function calculateScrollTop()
+{
+  //Calculate Scrolloffset
+  var scrollOffset = $(window).height() - 200;
+
+  //Put keys in an extra array and reverse it
+  var keys = [];
+  for (var k in chapterEvents) {
+      keys.unshift(k);
+  }
+  
+  chapterScrolltop = [];
+  for (var k in keys)
+  {
+    var keyname = keys[k];
+    var offset = $("#" + keyname).offset().top - scrollOffset;
+    chapterScrolltop[keyname] = offset;
+  }
+}
+
+function addFixChart(_url)
+{
+  var fixchart = $("#fixchart");
+  fixchart.empty();
+  fixchart.append($("<img src='" + _url + "'>"));
+  fixchart.fadeIn(1000);
+}
+
 function setCameraPosition(_llStart)
 {
   xzStartpunkt = latLon2XY(llNullPoint, _llStart);
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
   tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
-
+  ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
 }
+
+
+
+/*
+###############################
+
+  Calculate repeating Camera Movement
+  Removed, because of performance reasons
+
+###############################
+*/
+function getNewCameraRotation(_vector3)
+{
+    //Save Cameraposition
+    var oldRotationX = camera.rotation.x;
+    var oldRotationY = camera.rotation.y;
+    var oldRotationZ = camera.rotation.z;
+
+    //Create Vector3 as Target
+    var target = _vector3;
+
+    //Look at Point and store rotation
+    camera.lookAt(target);
+    var newRotationX = camera.rotation.x;
+    var newRotationY = camera.rotation.y;
+    var newRotationZ = camera.rotation.z;
+
+    //Set old Rotation
+    camera.rotation.set(oldRotationX, oldRotationY, oldRotationZ);
+
+    return {x: newRotationX, y: newRotationY, z: newRotationZ};
+}
+
+/*
+var cameraMovements = [];
+var lastCameraMovement = -1;
+
+function createCameraMovementTween()
+{
+  if(lastCameraMovement >= cameraMovements.length - 1)
+    lastCameraMovement = 0
+  else
+    lastCameraMovement++;
+
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+  .to({x: cameraMovements[lastCameraMovement].x, y: cameraMovements[lastCameraMovement].y, z: cameraMovements[lastCameraMovement].z}, 10000)
+  .easing(TWEEN.Easing.Quadratic.InOut)
+  .onComplete(function() {
+    setTimeout(createCameraMovementTween, 10);
+
+  })
+  .start();
+}
+*/
+
 
 function loadAirwaysJson(data)
 {
@@ -449,6 +776,48 @@ function getNearestLines(_source, _max)
   }
   return results;
 }
+
+function getNearestAirport(_source, _max)
+{
+  //Copy Geojson
+  var tmpLines = airports_features;
+
+  //Exclude Lines
+  var exclude_lines = [];
+
+  //Create Turf-Point
+  var pt = turf.point([_source.lon, _source.lat]);
+
+  //Create Result-List
+  var results = [];
+
+  //Run x times
+  for(var i = 0; i < _max; i++)
+  {
+    //Delete all points, which are already found
+    for(var n = tmpLines.features.length - 1; n >= 0; n--)
+    {
+      //Loop each exclude_lines
+      var name = tmpLines.features[n].properties.name;
+      for(var excl_line = 0; excl_line < exclude_lines.length; excl_line++)
+      {
+        if(name == exclude_lines[excl_line])
+        {
+          //Remove
+          tmpLines.features.splice(n, 1);
+          break;
+        }
+      }
+    }
+
+    //Now find nearest point
+    var res = turf.nearestPoint(pt, tmpLines);
+    results.push(res);
+    exclude_lines.push(res.properties.name);
+  }
+  return results;
+}
+
 
 function loadData(_data)
 {
@@ -523,6 +892,42 @@ function loadData(_data)
 
 function renderTracks()
 {
+  trackGroup = new THREE.Group();
+  trackGroup.visible = false;
+  trackLineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff } );
+
+  //Loop all icao24
+  for(icao24 in data_icao24)
+  {
+    icao24 = data_icao24[icao24];
+    
+    //Add Mesh
+    icao24.geometry = new THREE.Geometry();
+    icao24.geometry.vertices.needsUpdate = true;
+    icao24.geometry.needsUpdate = true;
+
+    icao24.meshline = new THREE.Line( icao24.geometry, trackLineMaterial );
+
+    for(var i = 0; i <= icao24.series.length - 1; i++)
+    {
+      var vector = new THREE.Vector3(icao24.series[i].xz.x, icao24.series[i].altitude, icao24.series[i].xz.z)
+      icao24.series[i].vertice = vector;
+      icao24.geometry.vertices.push(vector);
+    }
+    trackGroup.add(icao24.meshline);
+  }
+
+  scene.add(trackGroup);
+  lastTrack = new Date();
+  lastTrack.setHours(0);
+  lastTrack.setMinutes(0);
+  lastTrack.setSeconds(0);
+}
+
+/*
+//Original. Objekte erzeugen, aber noch nicht zeichnen.
+function renderTracks()
+{
   //Loop all icao24
   for(icao24 in data_icao24)
   {
@@ -552,6 +957,7 @@ function renderTracks()
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
 }
+*/
 
 function renderTimeSerie(_timestamp)
 {
@@ -583,6 +989,7 @@ function renderTimeSerie(_timestamp)
     serie.icao24.geometry.verticesNeedUpdate = true;
   }
 }
+
 
 /*
 function getRandomColor() {
@@ -668,22 +1075,29 @@ function createTweensAndStart(_serie)
   timestamp = data_series[timestampAsString];
   timestampNext = data_series[timestampNextAsString];
 
+  /*Set Position of Timeline
+  00:00 = 2%
+  24:00 = 98%
+  */
+  var minAbsolute = _serie.getHours() * 60 + _serie.getMinutes();
+  $("#timeline_point").css("left", ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%"); 
 
-  //Shader-Test
-  if(_serie.getHours() == 7)
+  //Sunrise/Sunset
+  var colorRatio = 1 / 120;
+  if(_serie.getHours() >= 6 && _serie.getHours() <= 7)
   {
-    console.log("SHADERTESTè");
-    //Add Skydom
-    var uniforms = {
-      topColor:    { value: new THREE.Color( 0xbada55 ) },
-      bottomColor: { value: new THREE.Color( 0xbada55 ) },
-      offset:      { value: 33 },
-      exponent:    { value: 0.6 }
-    };
+    //Change Background
+    skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r + colorRatio, skyMat.uniforms.bottomColor.value.g + colorRatio, skyMat.uniforms.bottomColor.value.b + colorRatio);
 
-    skyMat.uniforms.bottomColor = { value: new THREE.Color( 0xbada55) };
-    skyMat.needsUpdate = true;
-    sky.needsUpdate = true;
+    //Change Light Color (0.2 -> 0.6)
+    dirLight.intensity += 0.4 * colorRatio;
+  }
+  else if(_serie.getHours() >= 21 && _serie.getHours() <= 22)
+  {
+    skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r - colorRatio, skyMat.uniforms.bottomColor.value.g - colorRatio, skyMat.uniforms.bottomColor.value.b - colorRatio);
+    
+    //Change Light Color (0.6 -> 0.2)
+    dirLight.intensity -= 0.4 * colorRatio;
   }
 
   
@@ -715,7 +1129,7 @@ function createTweensAndStart(_serie)
         serie.icao24.meshplane.visible = true;
 
         //Make Tween
-        serie.icao24.tween = new TWEEN.Tween(serie.icao24.meshplane.position)
+        serie.icao24.tween = new TWEEN.Tween(serie.icao24.meshplane.position, tweenGroupPoints)
           .to({x: serieNext.xz.x, y: serieNext.altitude, z: serieNext.xz.z}, 100);
 
         tweenArray.push(serie.icao24.tween);
@@ -743,22 +1157,32 @@ function createTweensAndStart(_serie)
       tween.start();
     });
     
-    animateTween();
+    animateTweenTracks();
   }
 }
 
-function animateTween()
+function animateTweenTracks()
 {
-  if(TWEEN.getAll().length > 0)
+  var doRender = false;
+  if(tweenGroupPoints.getAll().length > 0)
   {
-    requestAnimationFrame( animateTween );
-    TWEEN.update();
+    doRender = true;
+    tweenGroupPoints.update();
   }
   else 
   {
     //No more tweens. Calculate next.
     createTweensAndStart(lastTrack);
   }
+
+  if(tweenGroupCameras.getAll().length > 0)
+  {
+    doRender = true;
+    tweenGroupCameras.update();
+  }
+
+  if(doRender)
+    requestAnimationFrame( animateTweenTracks );
 
   renderer.render( scene, camera );
 }
@@ -803,6 +1227,86 @@ function animate() {
 
   renderer.render( scene, camera );
 }
+
+function render()
+{
+  renderer.render( scene, camera );
+}
+
+/*
+###############################
+
+  Chapter functions
+
+###############################
+*/
+
+function startTHREEJS()
+{
+  //Register event after flying
+  map.once('moveend', function() {
+    //Animation ended
+    $("#map").fadeOut();
+    render();
+    if(bearing == 0)
+    {
+      //Workaround: Nur animation, wenn nicht zum Mittelpunkt schauen
+      camera.rotation.x = 0.9;
+      rotateCamera(0, camera.rotation.y, camera.rotation.z, 4000);
+    }
+
+
+  }); 
+
+  /*
+    Zum Mittelpunkt schauen, wenn:
+      Lat > 47.4838
+      Lng < 7.3563 oder < 9.1893
+  */
+
+  var bearing = 0;
+
+  if(llStartpunkt.lat > 47.4838 || llStartpunkt.lon < 7.3563 || llStartpunkt.lon > 9.1893)
+  {
+    //Look at Mittelpunkt
+    camera.lookAt(new THREE.Vector3(xzMittelpunkt.x, groundAltitude + 2, xzMittelpunkt.z));
+    bearing = bearingTo(llStartpunkt, llMittelpunkt);
+  }
+
+  //Lets Fly!
+  map.flyTo({
+    center: [llStartpunkt.lon, llStartpunkt.lat],
+    pitch: 60,
+    zoom: 16,
+    duration: 3000,
+    bearing: bearing
+  });
+}
+
+function chapter_timelaps_slow()
+{
+  lastTrack.setHours(6);
+  lastTrack.setMinutes(0);
+  lastTrack.setSeconds(0);
+  createTweensAndStart(lastTrack);
+  $("#timeline").fadeIn();
+}
+
+function chapter_show_lines()
+{
+  //renderTracks();
+  trackGroup.visible = true;
+  trackLineMaterial.transparent = true;
+  trackLineMaterial.opacity = 0.5;
+}
+
+/*
+###############################
+
+  Different Calculations
+
+###############################
+*/
 
 function km(_km)
 {
