@@ -6,7 +6,7 @@ body
   font-family: "open sans", "Verdana", "Tahoma";
 }
 
-#map
+.map
 {
   position: fixed;
   left: 0px;
@@ -15,6 +15,13 @@ body
   height: 100vh;
   z-index: 10;
   xdisplay: none;
+}
+
+#mapend
+{
+  visibility: hidden;
+  width: 100vw;
+  height: 100vh;
 }
 
 #target

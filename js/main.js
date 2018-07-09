@@ -1,11 +1,11 @@
 /*
 
   ToDo:
-    Event nur einmal ausführen
-    Nearest Airport
     Resize. Three neu berechnen plus calculateScrollTop();
-    Kameraposition nicht immer nach Norden
+    Scrollen
+    Mobile
     Dunkel werden
+    Stoppen nach 12 Uhr. AUCH WENN WIEDER GESTARTET!!
 
 */
 var testobject;
@@ -59,12 +59,13 @@ var trackGroup;
 var trackLineMaterial;
 
 //Mapbox Variables
-var map;
+var mapstart, mapend;
 var geocoder;
 
 //HTML-Varbiables
 var lastChapter;
 var chapterEvents = [];
+var calledChapters = []
 
 chapterEvents['#chapter_startTHREE'] = chapter_startTHREE;
 chapterEvents['#chapter_timelaps_slow'] = chapter_timelaps_slow;
@@ -92,91 +93,121 @@ var cities = [
     "id": "luzern",
     "img": "luzern.png",
     "latlon": new LatLon(47.055046, 8.305300),
+    "style": "label"
+  },
+  {
+    "id": "aarau",
+    "img": "aarau.png",
+    "latlon": new LatLon(47.390801, 8.046857),
+    "style": "label"
   },
   {
     "id": "zurich",
     "img": "zurich.png",
     "latlon": new LatLon(47.372084, 8.540693),
+    "style": "icon"
   },
   {
     "id": "winterthur",
-    "img": "leer.png",
-    "latlon": new LatLon(47.500399, 8.724567)
+    "img": "winterthur.png",
+    "latlon": new LatLon(47.500399, 8.724567),
+    "style": "label"
   },
   {
     "id": "stgallen",
-    "img": "leer.png",
-    "latlon": new LatLon(47.421097, 9.375037)
+    "img": "stgallen.png",
+    "latlon": new LatLon(47.421097, 9.375037),
+    "style": "label"
   },
   {
     "id": "konstanz",
-    "img": "leer.png",
-    "latlon": new LatLon(47.663340, 9.170435)
+    "img": "konstanz.png",
+    "latlon": new LatLon(47.663340, 9.170435),
+    "style": "label"
   },
   {
     "id": "schaffhausen",
-    "img": "leer.png",
-    "latlon": new LatLon(47.692347, 8.635310)
+    "img": "schaffhausen.png",
+    "latlon": new LatLon(47.692347, 8.635310),
+    "style": "label"
   },
   {
     "id": "bern",
     "img": "bern.png",
-    "latlon": new LatLon(46.947311, 7.447716)
+    "latlon": new LatLon(46.947311, 7.447716),
+    "style": "icon"
   },
   {
     "id": "biel",
-    "img": "leer.png",
-    "latlon": new LatLon(47.137394, 7.248539)
+    "img": "biel.png",
+    "latlon": new LatLon(47.137394, 7.248539),
+    "style": "label"
   },
   {
     "id": "neuenburg",
-    "img": "leer.png",
-    "latlon": new LatLon(46.992260, 6.910098)
+    "img": "neuenburg.png",
+    "latlon": new LatLon(46.992260, 6.910098),
+    "style": "label"
   },
   {
     "id": "yverdon-les-bains",
-    "img": "leer.png",
-    "latlon": new LatLon(46.783100, 6.640909)
+    "img": "yverdon-les-bains.png",
+    "latlon": new LatLon(46.783100, 6.640909),
+    "style": "label"
   },
   {
     "id": "lausanne",
-    "img": "leer.png",
-    "latlon": new LatLon(46.518534, 6.628543)
+    "img": "lausanne.png",
+    "latlon": new LatLon(46.518534, 6.628543),
+    "style": "label"
   },
   {
     "id": "genf",
     "img": "genf.png",
-    "latlon": new LatLon(46.202770, 6.148037)
+    "latlon": new LatLon(46.202770, 6.148037),
+    "style": "icon"
   },
   {
     "id": "zermatt",
-    "img": "leer.png",
-    "latlon": new LatLon(46.018972, 7.748883)
+    "img": "zermatt.png",
+    "latlon": new LatLon(46.018972, 7.748883),
+    "style": "label"
   },
   {
     "id": "visp",
-    "img": "leer.png",
-    "latlon": new LatLon(46.296203, 7.881271)
+    "img": "visp.png",
+    "latlon": new LatLon(46.296203, 7.881271),
+    "style": "label"
   },
   {
     "id": "sion",
-    "img": "leer.png",
-    "latlon": new LatLon(46.233313, 7.359701)
+    "img": "sion.png",
+    "latlon": new LatLon(46.233313, 7.359701),
+    "style": "label"
   },
   {
     "id": "chur",
-    "img": "leer.png",
-    "latlon": new LatLon(46.856793, 9.548603)
+    "img": "chur.png",
+    "latlon": new LatLon(46.856793, 9.548603),
+    "style": "label"
   },
   {
     "id": "stmoritz",
-    "img": "leer.png",
-    "latlon": new LatLon(46.488049, 9.834390)
+    "img": "stmoritz.png",
+    "latlon": new LatLon(46.488049, 9.834390),
+    "style": "label"
   },
   {
     "id": "davos",
-    "img": "leer.png",
-    "latlon": new LatLon(46.801325, 9.827914)
+    "img": "davos.png",
+    "latlon": new LatLon(46.801325, 9.827914),
+    "style": "label"
+  },
+  {
+    "id": "zug",
+    "img": "zug.png",
+    "latlon": new LatLon(47.170165, 8.515096),
+    "style": "label"
   }
 ];
 
@@ -382,11 +413,11 @@ $(document).ready( function() {
     userPositionSelected();
   });
 
-  //PrepareMapbox
+  //PrepareMapbox Start
   loaderAddCount();
   mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg';
-  map = new mapboxgl.Map({
-    container: 'map',
+  mapstart = new mapboxgl.Map({
+    container: 'mapstart',
     style: 'mapbox://styles/blick-storytelling/cjg6dbhus2vf32sp53s358gud',
     minZoom: 7,
     maxZoom: 20,
@@ -395,10 +426,26 @@ $(document).ready( function() {
     //maxBounds: [[4.730304, 44.300666], [12.021820, 48.831744]]
   });
 
-  map.on('load', function() {
-    map.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
+  mapstart.on('load', function() {
+    mapstart.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
     loaderRemoveCount(); //Mapbox
     $("#target").show();
+  });
+
+  //PrepareMapbox End
+  loaderAddCount();
+  mapend = new mapboxgl.Map({
+    container: 'mapend',
+    style: 'mapbox://styles/blick-storytelling/cjj8gspfu3ave2slhtb37oemg',
+    minZoom: 7,
+    maxZoom: 20,
+    center: [8.272616, 46.668562],
+    zoom: 7
+    //maxBounds: [[4.730304, 44.300666], [12.021820, 48.831744]]
+  });
+
+  mapend.on('load', function() {
+    loaderRemoveCount(); //Mapbox End
   });
 
   //Prepare THREEJS
@@ -544,8 +591,14 @@ function prepareTHREEJS()
     var spriteMap = textureLoader.load( "labels/" + e.img );
     var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
     e.sprite = new THREE.Sprite( spriteMaterial );
-    e.sprite.scale.set(4096, 4096, 1);
-    e.sprite.position.set(xzE.x, groundAltitude + 2048, xzE.z);
+    var e_scale = 1;
+    if(e.style == "label")
+    {
+      var e_scale = 2;
+    }
+
+    e.sprite.scale.set(4096 * e_scale, 4096 * e_scale, 1);
+    e.sprite.position.set(xzE.x, groundAltitude + 2048 * e_scale, xzE.z);
     //e.sprite.position.normalize();
     //e.sprite.position.multiplyScalar( 20000000 );
     scene.add( e.sprite );
@@ -573,7 +626,7 @@ function rotateCamera(_x, _y, _z, _duration)
   animateTween();
 }
 
-function rotateCameraPauseTween(_x, _y, _z, _duration)
+function rotateCameraPauseTween(_x, _y, _z, _duration, _callback)
 {
   stopTweenTracks();
 
@@ -582,6 +635,8 @@ function rotateCameraPauseTween(_x, _y, _z, _duration)
     .easing(TWEEN.Easing.Cubic.Out)
     .onComplete(function() {
       resumeTweenTracks();
+      if(_callback)
+        _callback();
     })
     .start();
 
@@ -611,16 +666,16 @@ function userPositionSelected()
   $("#wait_after_locate").show();
 
   //Remove Interactivity from Mapbox
-  map.boxZoom.disable();
-  map.scrollZoom.disable();
-  map.dragPan.disable();
-  map.dragRotate.disable();
-  map.keyboard.disable();
-  map.doubleClickZoom.disable();
-  map.touchZoomRotate.disable();
+  mapstart.boxZoom.disable();
+  mapstart.scrollZoom.disable();
+  mapstart.dragPan.disable();
+  mapstart.dragRotate.disable();
+  mapstart.keyboard.disable();
+  mapstart.doubleClickZoom.disable();
+  mapstart.touchZoomRotate.disable();
 
   //Set Startpoint and make a first Render
-  llStartpunkt = new LatLon(map.getCenter().lat, map.getCenter().lng);
+  llStartpunkt = new LatLon(mapstart.getCenter().lat, mapstart.getCenter().lng);
   setCameraPosition(llStartpunkt);
   //camera.rotation.x = 0.9;
   render();
@@ -733,7 +788,13 @@ function prepareHTMLGrid(_placeName)
           {
             //Run event
             lastChapter = k;
-            chapterEvents[k]();
+
+            //Check, if not already fired
+            if(calledChapters.indexOf(k) == -1)
+            {
+              chapterEvents[k]();
+              calledChapters.push(k);
+            }
           }
           break;
         }
@@ -1365,9 +1426,9 @@ function render()
 function chapter_startTHREE()
 {
   //Register event after flying
-  map.once('moveend', function() {
+  mapstart.once('moveend', function() {
     //Animation ended
-    $("#map").fadeOut();
+    $("#mapstart").fadeOut();
     render();
     if(bearing == 0)
     {
@@ -1395,12 +1456,18 @@ function chapter_startTHREE()
   }
 
   //Lets Fly!
-  map.flyTo({
+  mapstart.flyTo({
     center: [llStartpunkt.lon, llStartpunkt.lat],
     pitch: 60,
     zoom: 16,
     duration: 3000,
     bearing: bearing
+  });
+
+  //Position aswell the end map
+  mapend.jumpTo({
+    center: [llStartpunkt.lon, llStartpunkt.lat],
+    zoom: 16,
   });
 }
 
@@ -1502,38 +1569,44 @@ function chapter_after_airways()
 {
   var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 20));
   //rotateCameraPauseTween(newRotation.x, newRotation.y, newRotation.z, 2000);
+
 }
 
 function chapter_load_heatmap()
 {
-  map.once("data", function() {
-    console.log("data");
-  });
-
-  map.once("load", function() {
-    console.log("data");
-  });
-  map.setStyle('mapbox://styles/blick-storytelling/cjj8gspfu3ave2slhtb37oemg');
   stopTweenTracks();
-  $("#threejs").fadeOut();
-  $("#map").fadeIn();
 
-  //Enable Interactivity from Mapbox
-  map.boxZoom.enable();
-  map.scrollZoom.enable();
-  map.dragPan.enable();
-  map.dragRotate.enable();
-  map.keyboard.enable();
-  map.doubleClickZoom.enable();
-  map.touchZoomRotate.enable();
+  var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, groundAltitude - 50, camera.position.z - 10));
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+    .to({x: newRotation.x, y: newRotation.y, z: newRotation.z}, 1500)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(function() {
+      //Enable Camera     
 
-  map.flyTo({
-    center: [llMittelpunkt.lon, llMittelpunkt.lat],
-    pitch: 0,
-    zoom: 8,
-    duration: 1000,
-    bearing: 0
-  });
+      $("#threejs").fadeOut();
+      $("#mapend").css("visibility", "visible");
+    
+      //Enable Interactivity from Mapbox
+      mapend.boxZoom.enable();
+      mapend.scrollZoom.enable();
+      mapend.dragPan.enable();
+      mapend.dragRotate.enable();
+      mapend.keyboard.enable();
+      mapend.doubleClickZoom.enable();
+      mapend.touchZoomRotate.enable();
+    
+      mapend.flyTo({
+        center: [llMittelpunkt.lon, llMittelpunkt.lat],
+        pitch: 0,
+        zoom: 8,
+        duration: 3000,
+        bearing: 0
+      });
+
+    })
+    .start();
+  animateTween();
+
 
   //map.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
 }
