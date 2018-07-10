@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Über den Wolken - So ist der Luftraum über der Schweiz organisiert</title>
+  <title>Über den Wolken - So ist der Schweizer Luftraum organisiert</title>
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.css' rel='stylesheet' />
   <script src="lib/three.min.js" defer="true"></script>
-  <script src="lib/THREE.MeshLine.js" defer="true"></script>
-  <script src="lib/TrailRenderer.js" defer="true"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" defer="true"></script>
   <script src="lib/turf.min.js" defer="true"></script>
   <script src="lib/tween.min.js" defer="true"></script>
@@ -17,10 +15,6 @@
 
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="css/main.css">
-
-  <!-- RAUS!!! -->
-  <script src="lib/OrbitControls.js" defer="true"></script>
-
 
   <style>
     canvas { width: 100%; height: 100% }
@@ -69,10 +63,20 @@
     <img src="img/timeline.png">
     <div id="timeline_point"></div>
   </div>
+
+  <section id="scroller">
+    <a>
+      <span class="scroller_text">zum Fortfahren scrollen</span>
+      <span class="arrow"></span>
+    </a>
+  </section>
   
   <div id="fixchart"></div>
 
   <div id="content">
+
+    <div class="chapter_space_top"></div>
+
     <div class="chapter">
       <div class="chapter_content content_box">
         <h2 class="has_place">Hallo nach {place_name}!</h2>
@@ -85,9 +89,12 @@
         
         <span class="has_place">Finden wir es gemeinsam heraus und beobachten wir für einen Tag den Himmel über {place_name}.</span>
         <span class="has_no_place">Finden wir es gemeinsam heraus und beobachten wir für einen Tag den Himmel.</span>
-        <b>Scrollen du musst!</b>
+
       </div>
     </div>
+
+    <div class="chapter_space"></div>
+
     <div id="chapter_startTHREE" class="chapter">
       <div class="chapter_content content_box">
         <h2>Highways</h2>
@@ -96,6 +103,9 @@
         Denn obwohl Flügel frei machen sollen, dürfen Passagierflugzeuge die Schweiz nicht nach belieben durchqueren. Farbig dargestellt sehen Sie die Super-Autobahnen über Ihnen, also jene Flugrouten, über die der meiste Passagierverkehr gelotst wird. Sei es nach Berlin, Mallorca oder Gran Canaria, auf eine dieser Strassen müssen sich die Jets einreihen. Damit sich die Jets nicht in die Quere kommen, führt jede Route nur in eine Richtung.
       </div>
     </div>
+
+    <div class="chapter_space"></div>
+
     <div class="chapter">
       <div class="chapter_content content_box">
         <h2>Nachtflugverbot</h2>
@@ -105,12 +115,17 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_timelaps_slow" class="chapter">
       <div class="chapter_content content_box clearfix">
-        <img src="img/flugbewegungen.jpg" class="imageright">
-        Momentan sehen Sie die Flugbewegungen eines vollen Tages im Schnelldurchlauf. Bevor wir uns die Strassen über Ihnen genauer anschauen, werfen wir den Blick auf den Ursprung jeder Flugreise: Den Flughafen. Im letzten Jahr haben Schweizer Flughäfen insgesamt 54'911'905 Passagiere transportiert. Das sind 60 Prozent mehr als im Jahr 2000. 460'000 Landungen und Starts in einem Jahr! Am meisten beansprucht werden die Pisten von Zürich, Genf und Basel-Mulhouse.
+        <h2>460'000 Landungen</h2>
+        <p>Momentan sehen Sie die Flugbewegungen eines vollen Tages im Schnelldurchlauf. Bevor wir uns die Strassen über Ihnen genauer anschauen, werfen wir den Blick auf den Ursprung jeder Flugreise: Den Flughafen. Im letzten Jahr haben Schweizer Flughäfen insgesamt 54'911'905 Passagiere transportiert. Das sind 60 Prozent mehr als im Jahr 2000. 460'000 Landungen und Starts in einem Jahr! Am meisten beansprucht werden die Pisten von Zürich, Genf und Basel-Mulhouse.</p>
+        <p><img src="img/flugbewegungen.jpg" class="imagecenter"></p>
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_airport_1" class="chapter">
       <div class="chapter_content content_box">
@@ -122,6 +137,7 @@
           <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Zürich. Etwa {airport_1_distance}km trennen {place_name} vom Gate.</span>
           <span class="has_no_place">Am nächsten liegt der Flughafen Zürich. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 750 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 650 Flüge.
+          <p><img src="img/airport_shape_zurich.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Genf -->
@@ -131,6 +147,7 @@
           <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Genf. Etwa {airport_1_distance}km trennen {place_name} vom Gate.</span>
           <span class="has_no_place">Am nächsten liegt der Flughafen Genf. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Genf weg. Über das Jahr sind es durchschnittlich 259 Flüge.
+          <p><img src="img/airport_shape_geneva.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Basel -->
@@ -140,10 +157,13 @@
           <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km trennen {place_name} vom Gate.</span>
           <span class="has_no_place">Am nächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Basel-Mulhouse weg. Über das Jahr sind es durchschnittlich 95 Flüge.
+          <p><img src="img/airport_shape_bale.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
 
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div class="chapter airport_destination_1">
       <div class="chapter_content content_box">
@@ -172,6 +192,8 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_airport_2" class="chapter">
       <div class="chapter_content content_box">
 
@@ -180,8 +202,9 @@
           <img src="img/airport_shape_zurich.jpg" class="imageright">
           <h2>Das Fenster in die Ferne</h2>
           <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Zürich. Etwa {airport_2_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Zürich. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Zürich. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 750 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 650 Flüge.
+          <p><img src="img/airport_shape_zurich.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Genf -->
@@ -189,8 +212,9 @@
           <img src="img/airport_shape_geneva.jpg" class="imageright">
           <h2>Die Nummer zwei</h2>
           <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Genf. Etwa {airport_2_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Genf. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Genf. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Genf weg. Über das Jahr sind es durchschnittlich 259 Flüge.
+          <p><img src="img/airport_shape_geneva.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Basel -->
@@ -198,12 +222,15 @@
           <img src="img/airport_shape_bale.jpg" class="imageright">
           <h2>Die Nummer drei</h2>
           <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Basel-Mulhouse weg. Über das Jahr sind es durchschnittlich 95 Flüge.
+          <p><img src="img/airport_shape_bale.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
 
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div class="chapter airport_destination_2">
       <div class="chapter_content content_box">
@@ -232,6 +259,7 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
 
     <div class="chapter">
       <div class="chapter_content content_box airways_intro">
@@ -245,12 +273,16 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_nearest_airway_0" class="chapter chapter_airways_0">
       <div class="chapter_content content_box">
         <h2><span class="label_route">NR</span><span class="route_title">Route 1</span></h2>
         <span class="route_text">Text Route 1</span>
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_nearest_airway_1" class="chapter chapter_airways_1">
       <div class="chapter_content content_box">
@@ -259,12 +291,16 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_nearest_airway_2" class="chapter chapter_airways_2">
       <div class="chapter_content content_box">
         <h2><span class="label_route">NR</span><span class="route_title">Route 3</span></h2>
         <span class="route_text">Text Route 1</span>
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_after_airways" class="chapter">
       <div class="chapter_content content_box">
@@ -274,6 +310,8 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div class="chapter">
       <div class="chapter_content content_box">
         <h2>Luftrouten</h2>
@@ -282,6 +320,8 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_show_lines" class="chapter">
       <div class="chapter_content content_box">
         <h2>Weben mit Wasserdampf</h2>
@@ -289,13 +329,18 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_load_heatmap" class="chapter">
       <div class="chapter_content content_box">
+        <h2>Die Nacht bricht ein</h2>
         Nachdem tausende Passagiere von Zürich, Genf, Basel-Mulhouse oder kleineren Flughäfen abgefertigt wurde, neigt sich unser Tag dem Ende zu. Das dichte Netz der Flugbewegungen eines vollen Tages sehen wir jetzt aus der Vogelperspektive. Rote Gebiete bedeuten, dass da besonders viele Flugzeuge durchgeflogen sind. Sie können die Karte nun selbst entdecken. Bewegen und zoomen Sie Karte, nach dem Sie den Entdecker-Modus eingeschaltet haben.
-        <button>Entdecker-Modus einschalten</button>
+        <button id="adventuremode" class="btn_n btn_mouse"><span>Entdecker-Modus einschalten</span></button>
       </div>
     </div>
   </div>
+
+  <div class="chapter_space_top"></div>
 
   <div id="mapstart" class="map">
     <div id="target">
