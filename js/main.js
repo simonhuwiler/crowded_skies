@@ -1,6 +1,7 @@
 /*
 
   ToDo:
+    Korrekte Bilder rein
     Resize. Three neu berechnen plus calculateScrollTop();
     Scrollen
     Mobile
@@ -294,124 +295,20 @@ var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
-  $("#render").on("click", function() {
-    //camera.lookAt(new THREE.Vector3(xzStartpunkt.x, km(100), xzStartpunkt.z));
-    renderer.render( scene, camera );
-  });
-
-  $("#doit").on("click", function() {
-    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x + 4, camera.position.y + 5, camera.position.z - 20)));
-    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x - 4, camera.position.y + 5, camera.position.z - 20)));
-    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 1)));
-
-    createCameraMovementTween();
-    //Tween
-    //new TWEEN.Tween(camera.rotation, tweenGroupCameras).to({x: newRotationX, y: newRotationY, z: newRotationZ}, 2000);
-
-
-    //animateTweenTracks();
-    //chapter_show_lines();
-    
-  });
-
-  $("#doitback").on("click", function() {
-    console.log("doitback");
-    camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
-    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z - 200));
-    renderer.render( scene, camera );
-  });
-
-  $("#kippen").on("click", function() {
-    console.log("kippen");
-    camera.rotation.x = camera.rotation.x + 0.1;
-    renderer.render( scene, camera );
-  });
-
-  $(".move_camera").on("click", function(e) {
-    console.log(e.target.dataset.x, e.target.dataset.y);
-    camera.rotation.x = camera.rotation.x + parseFloat(e.target.dataset.x);
-    camera.rotation.y = camera.rotation.y + parseFloat(e.target.dataset.y);
-    renderer.render( scene, camera );
-  });
-
-  $("#rendertarget_1").on("click", function(e) {
-
-    console.log("rendertarget1");
-
-
-    var spriteMap = new THREE.TextureLoader().load( "img/plane.png" );
-    var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
-    testobject = new THREE.Sprite( spriteMaterial );
-    testobject.scale.set(32, 32, 1);
-    testobject.position.set(xzStartpunkt.x, groundAltitude + 10, xzStartpunkt.z - km(1));
-    scene.add( testobject );
-    bufferScene.add( testobject );
-
-    //Create Bildschirm
-    var fadeMaterial = new THREE.MeshBasicMaterial({
-      //color: 0xffcc00,
-      transparent: true,
-      opacity: 1,
-      map: rendertarget.texture
-    });
-
-    var fadePlane = new THREE.PlaneBufferGeometry(1, 1);
-    var fadeMesh = new THREE.Mesh(fadePlane, fadeMaterial);
-    fadeMesh.position.set(camera.position.x, camera.position.y, camera.position.z - 0.1);
-    fadeMesh.renderOrder = -1;
-    scene.add(fadeMesh);
-     
-
-    renderer.render(bufferScene, camera, rendertarget);
-    renderer.render( scene, camera );
-  });
-
-
-  $("#rendertarget_2").on("click", function(e) {
-    console.log("rendertarget2");
-
-    testobject.position.y += 1;
-
-    renderer.render(bufferScene, camera, rendertarget);
-    renderer.render( scene, camera );
-
-  });
-
-  $("#play").on("click", function(e) {
-    animateLines();
-  });  
-  $("#play2").on("click", function(e) {
-    createTweensAndStart(lastTrack);
-  });
-
-  $("#count").on("click", function() {
-    renderTracks();
-    render();
-    return;
-    console.log("count");
-    var doIt = true;
-    while(doIt)
-    {
-      lastTrack.setMinutes(lastTrack.getMinutes() + 1);
-      renderTimeSerie(lastTrack);
-      
-      if(lastTrack.getHours() == 22)
-        doIt = false;
-    }
-    renderer.render( scene, camera );
-    console.log("fertig");
-  });
-
-  $("#cameratest").on("click", function() {
-
-    prepareHTMLGrid();
-
-  });
-
-
   $("#setPosition").on("click", function() {
     userPositionSelected();
   });
+
+  $(window).on("resize", function() {
+    if(camera && renderer)
+    {
+      calculateScrollTop();
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      render();
+    }
+  })
 
   //PrepareMapbox Start
   loaderAddCount();
