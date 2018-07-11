@@ -104,6 +104,19 @@ body
   height: 30px;
 }
 
+@media screen and (max-width: 798px) {
+  #logo
+  {
+    height: 20px;
+    padding: 1px;
+  }
+
+  #logo img
+  {
+    height: 15px;
+  }
+}
+
 #target
 {
   xwidth: 50px;
@@ -256,7 +269,7 @@ h2
 
 .box_credits
 {
-  background-color: #506592;
+  background-color: #d6081c;
   color: #fff;
   font-size: 0.8em;
   line-height: 1.2em;
@@ -332,6 +345,12 @@ h2
   top: -4px;
 }
 
+#airway_short_0, #airway_short_1, #airway_short_2
+{
+  font-size: 0.8em !important;
+  margin-right: 0px !important;
+}
+
 .color_ul613
 {
   background-color: #e06933;
@@ -395,10 +414,10 @@ h2
 }
 
 .btn_n:hover {
-  color: #a7cae0;
+  color: #dab1b5;
 }
 .btn_n.active:hover {
-  color: #a7cae0;
+  color: #dab1b5;
 }
 
 .btn_mouse
@@ -424,6 +443,13 @@ h2
   border-radius: 0px;
   text-align: center;
   cursor: pointer;
+}
+
+#buttonReload
+{
+  position: fixed;
+  z-index: 101;
+  display: none;
 }
 
 /* ----- Scroll ----- */

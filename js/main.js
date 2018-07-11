@@ -1,19 +1,10 @@
 /*
 
-
-  * Header zu dick
-  * "Der nächste Flughafen" umformulieren, für die komplizierten Berner
-  * "Die Nummer drei"
-  * Geordnetes Chaos -> Flugrouten farbig
-  * "Einen anderen Ort wählen"
-  * Button rot
-  * Anderes Händli
-
   ToDo:
-    Credits/Quelle
-    Ladestatus am anfang
-    Firefoxtest
-    Minify
+  * Anderes Händli
+  * Metazeugs
+  * Ladestatus am anfang
+  * Minify
 
 */
 /*
@@ -310,11 +301,9 @@ var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
-  /*
-  $("#setPosition").on("click", function() {
-    userPositionSelected();
+  $("#test").on("click", function() {
+
   });
-  */
 
   $(window).on("resize", function() {
     if(camera && renderer)
@@ -328,8 +317,37 @@ $(document).ready( function() {
   });
 
   $("#adventuremode").on("click", function() {
+    var btn_old = $("#adventuremode");
+    var btn_new = $("#buttonReload");
+
+    //Set Position
+    btn_new.css("left", btn_old.offset().left);
+    btn_new.css("top", btn_old.offset().top - $(window).scrollTop());
+    btn_new.show();
+
+    //Hide old
+    btn_old.css("visibility", "hidden");
+
+    //Start Fadeout
     $("#content").fadeOut();
-    mapend.addControl(new mapboxgl.NavigationControl());
+
+    //Start Animation
+    btn_new.addClass("buttonAnimation");
+    setTimeout(function() {
+      btn_new.css("transition", "top 1s, left 1s");
+      btn_new.css("xtransition-timing-function", "ease");
+      btn_new.css("left",0);
+      btn_new.css("top", 0);
+
+      mapend.addControl(new mapboxgl.NavigationControl());
+    }, 0);
+
+    $("span", btn_new).text("Einen anderen Ort wählen")
+
+  });
+
+  $("#buttonReload").on("click", function() {
+    location.reload();
   });
 
   //PrepareMapbox Start
@@ -354,7 +372,7 @@ $(document).ready( function() {
   });
 
   mapstart.on("dragstart", function() {
-    $("#header, #lead").fadeTo(200, 0.2);
+    $("#header, #lead").fadeTo(200, 0);
     disableStart();
   });
 
@@ -638,17 +656,6 @@ function userPositionSelected()
   //Calculate nearest Airways
   nearest_airways = getNearestLines(llStartpunkt, 3);
   
-  //Set Intro text
-  var intro = $(".airways_intro");
-  intro.html(intro.html().replace(new RegExp("{airway_1_name}", 'g'), nearest_airways[0].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_1_distance}", 'g'), Math.round(nearest_airways[0].properties.distanceToPoint)));
-  
-  intro.html(intro.html().replace(new RegExp("{airway_2_name}", 'g'), nearest_airways[1].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_2_distance}", 'g'), Math.round(nearest_airways[1].properties.distanceToPoint)));
-
-  intro.html(intro.html().replace(new RegExp("{airway_3_name}", 'g'), nearest_airways[2].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_3_distance}", 'g'), Math.round(nearest_airways[2].properties.distanceToPoint)));
-
   //Fill airways
   fillAirwayDiv(0);
   fillAirwayDiv(1);
@@ -657,6 +664,12 @@ function userPositionSelected()
 
 function fillAirwayDiv(_nr)
 {
+  //Set Intro Text
+  var intro = $(".airways_intro");
+  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_name}", 'g'), nearest_airways[_nr].properties.name.toUpperCase()));
+  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_distance}", 'g'), Math.round(nearest_airways[_nr].properties.distanceToPoint)));
+  $(".airways_intro #airway_short_" + _nr).addClass("color_" + nearest_airways[_nr].properties.name);
+
   aw = airways_text[nearest_airways[_nr].properties.name];
   $(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").text(aw.title);
   $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").addClass("color_" + nearest_airways[_nr].properties.name);

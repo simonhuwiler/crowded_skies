@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Über den Wolken - So ist der Schweizer Luftraum organisiert</title>
+  <title>Gewimmel am Himmel - So ist der Schweizer Luftraum organisiert</title>
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.css' rel='stylesheet' />
   <script src="lib/three.min.js" defer="true"></script>
@@ -53,6 +53,8 @@
     }
 
   </script>
+
+  <button id="buttonReload" class="btn_n btn_mouse"><span>Entdecker-Modus einschalten</span></button>
 
   <div id="wait_after_locate" class="please_wait content_box">
     <h2>Danke!</h2>
@@ -148,8 +150,8 @@
         <div class="airport_zurich clearfix">
           <img src="img/airport_shape_zurich.jpg" class="imageright">
           <h2>Das Fenster in die Ferne</h2>
-          <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Zürich. Etwa {airport_1_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am nächsten liegt der Flughafen Zürich. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_place">Der nächste der drei Flughäfen ist der Flughafen Zürich. Zwischen {place_name} und dem Flughafen liegen etwa {airport_1_distance}km.</span>
+          <span class="has_no_place">Der nächste der drei Flughäfen ist der Flughafen Zürich. Er liegt etwa {airport_1_distance}km entfernt.</span>
           An Spitzentagen während der Sommerferien gehen rund 750 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 650 Flüge.
           <p><img src="img/airport_shape_zurich.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
@@ -158,8 +160,8 @@
         <div class="airport_geneva clearfix">
           <img src="img/airport_shape_geneva.jpg" class="imageright">
           <h2>Die Nummer zwei</h2>
-          <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Genf. Etwa {airport_1_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am nächsten liegt der Flughafen Genf. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_place">Der nächste der drei Flughäfen ist der Flughafen Genf. Zwischen {place_name} und dem Flughafen liegen etwa {airport_1_distance}km.</span>
+          <span class="has_no_place">Der nächste der drei Flughäfen ist der Flughafen Genf. Er liegt etwa {airport_1_distance}km entfernt.</span>
           An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Genf weg. Über das Jahr sind es durchschnittlich 259 Flüge.
           <p><img src="img/airport_shape_geneva.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
@@ -167,9 +169,9 @@
         <!-- Basel -->
         <div class="airport_bale clearfix">
           <img src="img/airport_shape_bale.jpg" class="imageright">
-          <h2>Die Nummer drei</h2>
-          <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am nächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km sind es von hier bis zum Gate.</span>
+          <h2>Der drittgrösste Flughafen</h2>
+          <span class="has_place">Der nächste der drei Flughäfen ist der Flughafen Basel-Mulhouse. Zwischen {place_name} und dem Flughafen liegen etwa {airport_1_distance}km.</span>
+          <span class="has_no_place">Der nächste der drei Flughäfen ist der Flughafen Basel-Mulhouse. Er liegt etwa {airport_1_distance}km entfernt.</span>
           An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Basel-Mulhouse weg. Über das Jahr sind es durchschnittlich 95 Flüge.
           <p><img src="img/airport_shape_bale.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
@@ -215,8 +217,8 @@
         <div class="airport_zurich clearfix">
           <img src="img/airport_shape_zurich.jpg" class="imageright">
           <h2>Das Fenster in die Ferne</h2>
-          <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Zürich. Etwa {airport_2_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Zürich. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_place">Der zweitnächste Flughafen ist der Flughafen Zürich. Etwa {airport_2_distance}km trennen ihn von {place_name}.</span>
+          <span class="has_no_place">Der zweitnächste Flughafen ist der Flughafen Zürich. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 750 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 650 Flüge.
           <p><img src="img/airport_shape_zurich.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
@@ -225,8 +227,8 @@
         <div class="airport_geneva clearfix">
           <img src="img/airport_shape_geneva.jpg" class="imageright">
           <h2>Die Nummer zwei</h2>
-          <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Genf. Etwa {airport_2_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Genf. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
+          <span class="has_place">Der zweitnächste Flughafen ist der Flughafen Genf. Etwa {airport_2_distance}km trennen ihn von {place_name}.</span>
+          <span class="has_no_place">Der zweitnächste Flughafen ist der Flughafen Genf. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Genf weg. Über das Jahr sind es durchschnittlich 259 Flüge.
           <p><img src="img/airport_shape_geneva.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
@@ -234,9 +236,9 @@
         <!-- Basel -->
         <div class="airport_bale clearfix">
           <img src="img/airport_shape_bale.jpg" class="imageright">
-          <h2>Die Nummer drei</h2>
-          <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km trennen {place_name} vom Gate.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
+          <h2>Der drittgrösste Flughafen</h2>
+          <span class="has_place">Der zweitnächste Flughafen ist der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km trennen ihn von {place_name}.</span>
+          <span class="has_no_place">Der zweitnächste Flughafen ist der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Basel-Mulhouse weg. Über das Jahr sind es durchschnittlich 95 Flüge.
           <p><img src="img/airport_shape_bale.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
@@ -282,7 +284,7 @@
         <span class="has_place">Werfen wir nun einen Blick in den Himmel über {place_name}.</span>
         <span class="has_no_place">Werfen wir nun einen Blick in den Himmel.</span>
         Verschiedene Luftstrassen führen in die weite Welt hinaus.
-        Am nächsten liegt die <b>{airway_1_name}</b>. Nur etwa {airway_1_distance}km entfernt ist sie. Auch die <b>{airway_2_name}</b> liegt mit {airway_2_distance}km in Ihrer Nähe. Auch in Ihrer Umgebung, aber etwas weiter entfernt: Die {airway_3_distance}km entfernt liegende <b>{airway_3_name}</b>.<br />
+        Am nächsten liegt die <b id="airway_short_0" class="label_route">{airway_0_name}</b>. Nur etwa {airway_0_distance}km entfernt ist sie. Auch die <b id="airway_short_1" class="label_route">{airway_1_name}</b> liegt mit {airway_1_distance}km in Ihrer Nähe. Auch in Ihrer Umgebung, aber etwas weiter entfernt: Die {airway_2_distance}km entfernt liegende <b id="airway_short_2" class="label_route">{airway_2_name}</b>.<br />
         Schauen wir uns die drei Strassen genauer an.
       </div>
     </div>
