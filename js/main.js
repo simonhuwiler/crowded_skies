@@ -1,10 +1,12 @@
 /*
 
   ToDo:
+  * Texture
+  * Social buttons (albanien)
   * Anderes Händli
   * Metazeugs
-  * Ladestatus am anfang
   * Minify
+  * tracker!
 
 */
 /*
@@ -368,7 +370,6 @@ $(document).ready( function() {
     mapstart.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
 
     loaderRemoveCount(); //Mapbox
-    $("#target").show();
   });
 
   mapstart.on("dragstart", function() {
@@ -634,7 +635,7 @@ function userPositionSelected()
   nearest_airports = getNearestAirport(llStartpunkt, 2);
 
   //Copy Airport-section in HTML
-  $(".chapter_airport").clone().insertAfter(".chapter_airport");
+  //$(".chapter_airport").clone().insertAfter(".chapter_airport");
 
   //Prepare Airport 1
   var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name + " span");
@@ -1110,9 +1111,8 @@ function loaderRemoveCount()
   }
   else if(loaderCounter == 0)
   {
-    console.log("Everything loaded. Remove loader")
-    
-    //Do something
+    $("#maploader").fadeOut(200);
+    $("#target").show();
   }
 }
 
