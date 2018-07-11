@@ -104,6 +104,19 @@ body
   height: 30px;
 }
 
+@media screen and (max-width: 798px) {
+  #logo
+  {
+    height: 20px;
+    padding: 1px;
+  }
+
+  #logo img
+  {
+    height: 15px;
+  }
+}
+
 #target
 {
   xwidth: 50px;

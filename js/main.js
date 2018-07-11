@@ -1,16 +1,10 @@
 /*
 
-  * Header klein mobile
-  * "Einen anderen Ort wählen"
-  * Button rot
+  ToDo:
   * Anderes Händli
   * Metazeugs
-
-  ToDo:
-    Credits/Quelle
-    Ladestatus am anfang
-    Firefoxtest
-    Minify
+  * Ladestatus am anfang
+  * Minify
 
 */
 /*
