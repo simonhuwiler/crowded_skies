@@ -307,11 +307,9 @@ var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
-  /*
-  $("#setPosition").on("click", function() {
-    userPositionSelected();
+  $("#test").on("click", function() {
+
   });
-  */
 
   $(window).on("resize", function() {
     if(camera && renderer)
@@ -325,8 +323,37 @@ $(document).ready( function() {
   });
 
   $("#adventuremode").on("click", function() {
+    var btn_old = $("#adventuremode");
+    var btn_new = $("#buttonReload");
+
+    //Set Position
+    btn_new.css("left", btn_old.offset().left);
+    btn_new.css("top", btn_old.offset().top - $(window).scrollTop());
+    btn_new.show();
+
+    //Hide old
+    btn_old.css("visibility", "hidden");
+
+    //Start Fadeout
     $("#content").fadeOut();
-    mapend.addControl(new mapboxgl.NavigationControl());
+
+    //Start Animation
+    btn_new.addClass("buttonAnimation");
+    setTimeout(function() {
+      btn_new.css("transition", "top 1s, left 1s");
+      btn_new.css("xtransition-timing-function", "ease");
+      btn_new.css("left",0);
+      btn_new.css("top", 0);
+
+      mapend.addControl(new mapboxgl.NavigationControl());
+    }, 0);
+
+    $("span", btn_new).text("Einen anderen Ort wählen")
+
+  });
+
+  $("#buttonReload").on("click", function() {
+    location.reload();
   });
 
   //PrepareMapbox Start

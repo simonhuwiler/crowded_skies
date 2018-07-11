@@ -432,6 +432,13 @@ h2
   cursor: pointer;
 }
 
+#buttonReload
+{
+  position: fixed;
+  z-index: 101;
+  display: none;
+}
+
 /* ----- Scroll ----- */
 
 #scroller {
