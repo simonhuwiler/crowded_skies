@@ -422,9 +422,10 @@ h2
 
 .btn_mouse
 {
-  padding-left: 45px;
-  background-image: url('../img/mouse.png');
-  background-position: 5px center; 
+  padding-left: 5px;
+  padding-right: 35px;
+  background-image: url('../img/mouse.svg');
+  background-position: right 5px center; 
   background-repeat: no-repeat;
 }
 
