@@ -1,6 +1,6 @@
 /*
 
-
+  * Header klein mobile
   * "Einen anderen Ort wählen"
   * Button rot
   * Anderes Händli
@@ -351,7 +351,7 @@ $(document).ready( function() {
   });
 
   mapstart.on("dragstart", function() {
-    $("#header, #lead").fadeTo(200, 0.2);
+    $("#header, #lead").fadeTo(200, 0);
     disableStart();
   });
 
