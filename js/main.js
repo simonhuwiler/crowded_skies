@@ -1,9 +1,10 @@
 /*
 
   ToDo:
-    quelle
+    Credits/Quelle
     Ladestatus am anfang
     Firefoxtest
+    Minify
 
 */
 /*
@@ -336,7 +337,9 @@ $(document).ready( function() {
   });
 
   mapstart.on('load', function() {
+    mapstart.once('moveend', disableStart);
     mapstart.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
+
     loaderRemoveCount(); //Mapbox
     $("#target").show();
   });
@@ -1074,7 +1077,6 @@ function loaderRemoveCount()
     console.log("Everything loaded. Remove loader")
     
     //Do something
-
   }
 }
 
