@@ -108,7 +108,7 @@ body
 {
   xwidth: 50px;
   height: 50px;
-  background-image: url(../img/target.png);
+  background-image: url(../img/target.svg);
   background-size: contain;
   background-repeat: no-repeat;
   position: absolute;
