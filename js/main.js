@@ -1,5 +1,14 @@
 /*
 
+
+  * Header zu dick
+  * "Der nächste Flughafen" umformulieren, für die komplizierten Berner
+  * "Die Nummer drei"
+  * Geordnetes Chaos -> Flugrouten farbig
+  * "Einen anderen Ort wählen"
+  * Button rot
+  * Anderes Händli
+
   ToDo:
     Credits/Quelle
     Ladestatus am anfang
@@ -248,7 +257,7 @@ var airports_features = {
 var airways_text = [];
 airways_text['un869'] = {
   "title": "Auf zur Sonne",
-  "text": "Lust auf Sonne, Croissant oder Ibérico-Schinken? Gestartet im bayrischen Nürnberg, verläuft die UN869 über Basel quer durch die Schweiz, vorbei an Biel und Neuenburg. In Genf verlässt sie die Schweiz Richtung Frankreich.<br />Über Toulouse geht die Reise weiter nach Spanien. In der Nähe von Madrid vereint sich die UN869 mit der UL27, um im spanischen Málaga ans Ziel zu kommen."
+  "text": "Lust auf Sonne, Croissant oder Ibérico-Schinken? Gestartet im bayrischen Nürnberg, verläuft die UN869 über Basel quer durch die Schweiz, vorbei an Biel und Neuenburg. In Genf verlässt sie die Schweiz Richtung Frankreich. Über Toulouse geht die Reise weiter nach Spanien. In der Nähe von Madrid vereint sich die UN869 mit der UL27, um im spanischen Málaga ans Ziel zu kommen."
 };
 airways_text['un871'] = {
   "title": "Fertig Ferien",
@@ -344,8 +353,22 @@ $(document).ready( function() {
     $("#target").show();
   });
 
-  mapstart.on("dragstart", disableStart).on("zoomstart", disableStart);
-  mapstart.on("dragend", pointInShape).on("zoomend", pointInShape);
+  mapstart.on("dragstart", function() {
+    $("#header, #lead").fadeTo(200, 0.2);
+    disableStart();
+  });
+
+  mapstart.on("dragend", function() {
+    $("#header, #lead").fadeTo(200, 1);
+    pointInShape()
+  });
+  mapstart.on("zoomstart", function() {
+    disableStart()
+  });
+
+  mapstart.on("zoomend", function() {
+    pointInShape();
+  });
 
   //PrepareMapbox End
   loaderAddCount();
@@ -638,7 +661,7 @@ function fillAirwayDiv(_nr)
   $(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").text(aw.title);
   $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").addClass("color_" + nearest_airways[_nr].properties.name);
   $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").text(nearest_airways[_nr].properties.name.toUpperCase());
-  $(".chapter_airways_" + _nr + " .chapter_content .route_text").text(aw.text);
+  $(".chapter_airways_" + _nr + " .chapter_content .route_text").html(aw.text);
 }
 
 function prepareHTMLGrid(_placeName)

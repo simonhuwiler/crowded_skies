@@ -65,11 +65,11 @@
   </div>
 
   <div id="intro">
-    <div id="logo"><a href="https://www.blick.ch/interaktiv/" class="header_image"><img src="https://storytelling.blick.ch/longform/resources/v1/img/blick.png" width="96" height="35" class="logo" alt="BLICK"></a></div>
-    <div id="header"><img src="img/header.png"></div>
+    <div id="logo"><a href="https://www.blick.ch/interaktiv/" class="header_image"><img src="https://storytelling.blick.ch/longform/resources/v1/img/blick.png" class="logo" alt="BLICK"></a></div>
+    <div id="header"><img src="img/header2.png"></div>
     <div id="lead" class="content_box">
       <p>
-        Wir erzählen Ihnen, wie der Luftraum über Ihrem Wohnort aussieht. <b>Verschieben Sie dazu die Karte so, dass das Fadenkreuz auf den gewünschten Ort zeigt.</b> Klicken Sie anschliessend «Reise an diesem Ort beginnen, um den Schweizer Luftraum zu entdecken.
+        Wir erzählen Ihnen, wie der Luftraum über Ihrem Wohnort aussieht. <b>Verschieben Sie dazu die Karte so, dass das Fadenkreuz auf den gewünschten Ort zeigt.</b> Klicken Sie anschliessend «Reise an diesem Ort beginnen», um den Schweizer Luftraum zu entdecken.
       </p>
       <p>
           <button id="setPosition" class="btn_n btn_mouse btn_n_inactive"><span>Reise an diesem Ort beginnen</span></button>
@@ -114,7 +114,7 @@
         <h2>Highways</h2>
         <span class="has_place">Über {place_name} zeigt sich ein dichtes Netz von Flugrouten.</span>
         <span class="has_no_place">Am Himmel zeigt sich ein dichtes Netz von Flugrouten.</span>
-        Denn obwohl Flügel frei machen sollen, dürfen Passagierflugzeuge die Schweiz nicht nach belieben durchqueren. Farbig dargestellt sehen Sie die Super-Autobahnen über Ihnen, also jene Flugrouten, über die der meiste Passagierverkehr gelotst wird. Sei es nach Berlin, Mallorca oder Gran Canaria, auf eine dieser Strassen müssen sich die Jets einreihen. Damit sich die Jets nicht in die Quere kommen, führt jede Route nur in eine Richtung.
+        Denn obwohl Flügel frei machen sollen, dürfen Passagierflugzeuge die Schweiz nicht nach Belieben durchqueren. Farbig dargestellt sehen Sie die Super-Autobahnen über Ihnen, also jene Flugrouten, über die der meiste Passagierverkehr gelotst wird. Sei es nach Berlin, Mallorca oder Gran Canaria, auf eine dieser Strassen müssen sich die Jets einreihen. Damit sich die Jets nicht in die Quere kommen, führt jede Route nur in eine Richtung.
       </div>
     </div>
 
@@ -192,7 +192,7 @@
         <!-- Bale -->
         <div class="airport_bale">
           <h2>Von Basel nach Algier</h2>
-          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 540'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
+          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 220'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
           <p><img src="img/airport_target_bale.png" class="imagecenter"></p>
         </div>
 
@@ -259,7 +259,7 @@
         <!-- Bale -->
         <div class="airport_bale">
           <h2>Von Basel nach Algier</h2>
-          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 540'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
+          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 220'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
           <p><img src="img/airport_target_bale.png" class="imagecenter"></p>
         </div>
 
@@ -348,10 +348,38 @@
     <div id="chapter_load_heatmap" class="chapter">
       <div class="chapter_content content_box">
         <h2>Die Nacht bricht ein</h2>
-        Nachdem tausende Passagiere von Zürich, Genf, Basel-Mulhouse oder kleineren Flughäfen abgefertigt wurde, neigt sich unser Tag dem Ende zu. Das dichte Netz der Flugbewegungen eines vollen Tages sehen wir jetzt aus der Vogelperspektive. Rote Gebiete bedeuten, dass da besonders viele Flugzeuge durchgeflogen sind. Sie können die Karte nun selbst entdecken. Bewegen und zoomen Sie Karte, nach dem Sie den Entdecker-Modus eingeschaltet haben.
-        <button id="adventuremode" class="btn_n btn_mouse"><span>Entdecker-Modus einschalten</span></button>
+        <p>
+          Nachdem tausende Passagiere von Zürich, Genf, Basel-Mulhouse oder kleineren Flughäfen abgefertigt wurden, neigt sich unser Tag dem Ende zu. Das dichte Netz der Flugbewegungen eines vollen Tages sehen wir jetzt aus der Vogelperspektive. Rote Gebiete bedeuten, dass da besonders viele Flugzeuge durchgeflogen sind. Sie können die Karte nun selbst entdecken. Bewegen und zoomen Sie Karte, nach dem Sie den Entdecker-Modus eingeschaltet haben.
+        </p>
+        <p style="text-align: center">
+          <button id="adventuremode" class="btn_n btn_mouse"><span>Entdecker-Modus einschalten</span></button>
+        </p>
       </div>
     </div>
+    <div class="chapter">
+        <div class="chapter_content content_box box_credits">
+          <p>
+          <b>Eine Produktion von:</b><br />
+          Simon Huwiler, Priska Wallimann, Marcel Aerni, Janine Gygax
+          </p>
+          <p>
+            <b>Feedback:</b><br />
+            <a href="mailto:storytelling@ringier.ch?subject=Gewimmel am Himmel" target="_blank">storytelling@ringier.ch</a>
+          </p>
+          <p>
+            <b>Quellen:</b><br />
+            <a href="https://opensky-network.org/" target="_blank">opensky-network.org</a>, Skyguide, BfS, Flughafen Zürich AG, EuroAirport Basel, Genève Aéroport
+          </p>
+          <p>
+            <b>Flugzeugdaten:</b><br />
+            21.05.2018
+          </p>
+          <p>
+            <b>Publikation:</b><br />
+            Juli 2018
+          </p>
+        </div>
+      </div>
   </div>
 
   <div class="chapter_space_top"></div>
