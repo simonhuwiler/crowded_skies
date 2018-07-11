@@ -33,6 +33,50 @@ body
   height: 100vh;
 }
 
+#intro
+{
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  pointer-events: none;
+}
+
+#header
+{
+  width: 798px;
+  max-width: 100%;
+  position: absolute;
+  padding-top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  -webkit-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+}
+
+#header img
+{
+  width: 100%;
+}
+
+#lead
+{
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  -webkit-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  text-align: center;
+  pointer-events: all;
+}
+
 #target
 {
   xwidth: 50px;
@@ -51,6 +95,7 @@ body
   -ms-transform: translate(-25px, -50%);
   padding-left: 60px;
   display: none;
+  pointer-events: none;
 }
 
 #threejs
@@ -290,7 +335,7 @@ h2
 /* Button entdecken */
 .btn_n {
   min-width: 1px;
-  padding-left: 10px;
+  xpadding-left: 10px;
   padding-top: 10px;
   padding-bottom: 10px;
   font-family: "Open Sans", Arial, sans-serif;
@@ -322,6 +367,23 @@ h2
   background-image: url('../img/mouse.png');
   background-position: 5px center; 
   background-repeat: no-repeat;
+}
+
+.btn_n_inactive
+{
+  background-color: #50659259;
+
+  min-width: 1px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-family: "Open Sans", Arial, sans-serif;
+  xmargin-top: 15px;
+  border: 0px solid #999;
+  color: #fff;
+  font-size: 1.0em;
+  border-radius: 0px;
+  text-align: center;
+  cursor: pointer;
 }
 
 /* ----- Scroll ----- */

@@ -3,6 +3,7 @@
   ToDo:
     quelle
     Ladestatus am anfang
+    Firefoxtest
 
 */
 /*
@@ -299,9 +300,11 @@ var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
+  /*
   $("#setPosition").on("click", function() {
     userPositionSelected();
   });
+  */
 
   $(window).on("resize", function() {
     if(camera && renderer)
@@ -543,7 +546,8 @@ function userPositionSelected()
   setTimeout(function() {
     //Change UI
     $("#target").hide();
-    
+    $("#intro").hide();
+
     $("#wait_after_locate").show();
   }, 0);
 
@@ -1295,12 +1299,16 @@ function pointInShape()
 
 function enableStart()
 {
-  $("#setPosition").show();
+  $("#setPosition").addClass("btn_n");
+  $("#setPosition").removeClass("btn_n_inactive");
+  $("#setPosition").on("click", userPositionSelected);
 }
 
 function disableStart()
 {
-  $("#setPosition").hide();
+  $("#setPosition").addClass("btn_n_inactive");
+  $("#setPosition").removeClass("btn_n");
+  $("#setPosition").off("click");
 }
 
 /*
