@@ -249,7 +249,7 @@ h2
 
 .box_credits
 {
-  background-color: #506592;
+  background-color: #d6081c;
   color: #fff;
   font-size: 0.8em;
   line-height: 1.2em;
@@ -323,6 +323,12 @@ h2
   margin-right: 6px;
   position: relative;
   top: -4px;
+}
+
+#airway_short_0, #airway_short_1, #airway_short_2
+{
+  font-size: 0.8em !important;
+  margin-right: 0px !important;
 }
 
 .color_ul613

@@ -1,13 +1,10 @@
 /*
 
 
-  * Header zu dick
-  * "Der nächste Flughafen" umformulieren, für die komplizierten Berner
-  * "Die Nummer drei"
-  * Geordnetes Chaos -> Flugrouten farbig
   * "Einen anderen Ort wählen"
   * Button rot
   * Anderes Händli
+  * Metazeugs
 
   ToDo:
     Credits/Quelle
@@ -638,17 +635,6 @@ function userPositionSelected()
   //Calculate nearest Airways
   nearest_airways = getNearestLines(llStartpunkt, 3);
   
-  //Set Intro text
-  var intro = $(".airways_intro");
-  intro.html(intro.html().replace(new RegExp("{airway_1_name}", 'g'), nearest_airways[0].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_1_distance}", 'g'), Math.round(nearest_airways[0].properties.distanceToPoint)));
-  
-  intro.html(intro.html().replace(new RegExp("{airway_2_name}", 'g'), nearest_airways[1].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_2_distance}", 'g'), Math.round(nearest_airways[1].properties.distanceToPoint)));
-
-  intro.html(intro.html().replace(new RegExp("{airway_3_name}", 'g'), nearest_airways[2].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_3_distance}", 'g'), Math.round(nearest_airways[2].properties.distanceToPoint)));
-
   //Fill airways
   fillAirwayDiv(0);
   fillAirwayDiv(1);
@@ -657,6 +643,12 @@ function userPositionSelected()
 
 function fillAirwayDiv(_nr)
 {
+  //Set Intro Text
+  var intro = $(".airways_intro");
+  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_name}", 'g'), nearest_airways[_nr].properties.name.toUpperCase()));
+  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_distance}", 'g'), Math.round(nearest_airways[_nr].properties.distanceToPoint)));
+  $(".airways_intro #airway_short_" + _nr).addClass("color_" + nearest_airways[_nr].properties.name);
+
   aw = airways_text[nearest_airways[_nr].properties.name];
   $(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").text(aw.title);
   $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").addClass("color_" + nearest_airways[_nr].properties.name);
