@@ -1,12 +1,13 @@
 /*
 
   ToDo:
-  * Texture
+  * Texture (WMS?)
+  * Buttons hintergrundfarbe
   * Social buttons (albanien)
-  * Anderes Händli
   * Metazeugs
   * Minify
   * tracker!
+
 
 */
 /*
