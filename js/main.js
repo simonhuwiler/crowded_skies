@@ -1,14 +1,14 @@
 /*
 
   ToDo:
-    Event nur einmal ausführen
-    Nearest Airport
-    Resize. Three neu berechnen plus calculateScrollTop();
-    Kameraposition nicht immer nach Norden
-    Dunkel werden
+  * Texture (WMS?)
+  * Flugifarbe
+  * Metazeugs
+  * Minify
+  * tracker!
+
 
 */
-var testobject;
 /*
 
 https://www.northrivergeographic.com/qgis-points-along-line
@@ -59,12 +59,13 @@ var trackGroup;
 var trackLineMaterial;
 
 //Mapbox Variables
-var map;
+var mapstart, mapend;
 var geocoder;
 
 //HTML-Varbiables
 var lastChapter;
 var chapterEvents = [];
+var calledChapters = []
 
 chapterEvents['#chapter_startTHREE'] = chapter_startTHREE;
 chapterEvents['#chapter_timelaps_slow'] = chapter_timelaps_slow;
@@ -92,94 +93,133 @@ var cities = [
     "id": "luzern",
     "img": "luzern.png",
     "latlon": new LatLon(47.055046, 8.305300),
+    "style": "label"
+  },
+  {
+    "id": "aarau",
+    "img": "aarau.png",
+    "latlon": new LatLon(47.390801, 8.046857),
+    "style": "label"
   },
   {
     "id": "zurich",
     "img": "zurich.png",
     "latlon": new LatLon(47.372084, 8.540693),
+    "style": "icon"
   },
   {
     "id": "winterthur",
-    "img": "leer.png",
-    "latlon": new LatLon(47.500399, 8.724567)
+    "img": "winterthur.png",
+    "latlon": new LatLon(47.500399, 8.724567),
+    "style": "label"
   },
   {
     "id": "stgallen",
-    "img": "leer.png",
-    "latlon": new LatLon(47.421097, 9.375037)
+    "img": "stgallen.png",
+    "latlon": new LatLon(47.421097, 9.375037),
+    "style": "label"
   },
   {
     "id": "konstanz",
-    "img": "leer.png",
-    "latlon": new LatLon(47.663340, 9.170435)
+    "img": "konstanz.png",
+    "latlon": new LatLon(47.663340, 9.170435),
+    "style": "label"
   },
   {
     "id": "schaffhausen",
-    "img": "leer.png",
-    "latlon": new LatLon(47.692347, 8.635310)
+    "img": "schaffhausen.png",
+    "latlon": new LatLon(47.692347, 8.635310),
+    "style": "label"
   },
   {
     "id": "bern",
     "img": "bern.png",
-    "latlon": new LatLon(46.947311, 7.447716)
+    "latlon": new LatLon(46.947311, 7.447716),
+    "style": "icon"
   },
   {
     "id": "biel",
-    "img": "leer.png",
-    "latlon": new LatLon(47.137394, 7.248539)
+    "img": "biel.png",
+    "latlon": new LatLon(47.137394, 7.248539),
+    "style": "label"
   },
   {
     "id": "neuenburg",
-    "img": "leer.png",
-    "latlon": new LatLon(46.992260, 6.910098)
+    "img": "neuenburg.png",
+    "latlon": new LatLon(46.992260, 6.910098),
+    "style": "label"
   },
   {
     "id": "yverdon-les-bains",
-    "img": "leer.png",
-    "latlon": new LatLon(46.783100, 6.640909)
+    "img": "yverdon-les-bains.png",
+    "latlon": new LatLon(46.783100, 6.640909),
+    "style": "label"
   },
   {
     "id": "lausanne",
-    "img": "leer.png",
-    "latlon": new LatLon(46.518534, 6.628543)
+    "img": "lausanne.png",
+    "latlon": new LatLon(46.518534, 6.628543),
+    "style": "label"
   },
   {
     "id": "genf",
     "img": "genf.png",
-    "latlon": new LatLon(46.202770, 6.148037)
+    "latlon": new LatLon(46.202770, 6.148037),
+    "style": "icon"
   },
   {
     "id": "zermatt",
-    "img": "leer.png",
-    "latlon": new LatLon(46.018972, 7.748883)
+    "img": "zermatt.png",
+    "latlon": new LatLon(46.018972, 7.748883),
+    "style": "label"
   },
   {
     "id": "visp",
-    "img": "leer.png",
-    "latlon": new LatLon(46.296203, 7.881271)
+    "img": "visp.png",
+    "latlon": new LatLon(46.296203, 7.881271),
+    "style": "label"
   },
   {
     "id": "sion",
-    "img": "leer.png",
-    "latlon": new LatLon(46.233313, 7.359701)
+    "img": "sion.png",
+    "latlon": new LatLon(46.233313, 7.359701),
+    "style": "label"
   },
   {
     "id": "chur",
-    "img": "leer.png",
-    "latlon": new LatLon(46.856793, 9.548603)
+    "img": "chur.png",
+    "latlon": new LatLon(46.856793, 9.548603),
+    "style": "label"
   },
   {
     "id": "stmoritz",
-    "img": "leer.png",
-    "latlon": new LatLon(46.488049, 9.834390)
+    "img": "stmoritz.png",
+    "latlon": new LatLon(46.488049, 9.834390),
+    "style": "label"
   },
   {
     "id": "davos",
-    "img": "leer.png",
-    "latlon": new LatLon(46.801325, 9.827914)
+    "img": "davos.png",
+    "latlon": new LatLon(46.801325, 9.827914),
+    "style": "label"
+  },
+  {
+    "id": "zug",
+    "img": "zug.png",
+    "latlon": new LatLon(47.170165, 8.515096),
+    "style": "label"
   }
 ];
 
+/*
+###############################
+
+  Shape Switzerland
+
+###############################
+*/
+
+var shape_switzerland = turf.polygon([[[8.3847,46.4522],[8.3669,46.4519],[8.2989,46.4142],[8.3187,46.3861],[8.25,46.3408],[8.224,46.3344],[8.212,46.3098],[8.1614,46.2959],[8.141,46.3021],[8.0864,46.2665],[8.1102,46.2495],[8.1153,46.2361],[8.1389,46.2261],[8.1533,46.1911],[8.1655,46.1822],[8.1496,46.1615],[8.1441,46.1367],[8.1161,46.1305],[8.1082,46.1116],[8.0348,46.1008],[8.0217,46.0694],[8.0353,46.044],[8.0119,46.0312],[7.9891,45.9959],[7.9771,45.9995],[7.9087,45.9969],[7.8923,45.9775],[7.8774,45.9739],[7.8684,45.9367],[7.8731,45.9205],[7.8218,45.927],[7.7995,45.9171],[7.7693,45.9371],[7.7478,45.941],[7.7351,45.924],[7.7073,45.9349],[7.7099,45.9481],[7.681,45.957],[7.6643,45.9757],[7.6395,45.9701],[7.589,45.9705],[7.575,45.9874],[7.5501,45.9866],[7.539,45.9554],[7.5169,45.9624],[7.4773,45.9521],[7.4749,45.9372],[7.4444,45.9316],[7.4271,45.9155],[7.4018,45.9115],[7.3845,45.8968],[7.3442,45.9152],[7.2853,45.9157],[7.2769,45.9007],[7.2164,45.8888],[7.189,45.8589],[7.1535,45.8793],[7.1185,45.8594],[7.1011,45.8593],[7.0645,45.9093],[7.0437,45.9232],[7.0374,45.9549],[7.0086,45.9692],[7.0226,45.9772],[7.0107,45.9972],[6.985,46.0046],[6.9813,46.0196],[6.9629,46.0304],[6.9514,46.0499],[6.9246,46.0652],[6.8913,46.0427],[6.8717,46.0512],[6.8918,46.0737],[6.8822,46.0952],[6.8999,46.1239],[6.8151,46.1293],[6.798,46.1364],[6.7917,46.1629],[6.8126,46.1815],[6.8035,46.2046],[6.854,46.2539],[6.8649,46.2802],[6.8301,46.3001],[6.8198,46.3156],[6.7751,46.3471],[6.7714,46.361],[6.7927,46.3676],[6.8211,46.4272],[6.6819,46.4543],[6.5191,46.4564],[6.4256,46.4158],[6.3352,46.4037],[6.253,46.3604],[6.2196,46.3119],[6.249,46.302],[6.238,46.2817],[6.2668,46.2477],[6.3098,46.2562],[6.3103,46.244],[6.2913,46.2238],[6.2496,46.205],[6.234,46.2064],[6.1862,46.1783],[6.1888,46.1664],[6.1364,46.1416],[6.0985,46.1438],[6.0917,46.1519],[6.0523,46.1513],[6.0317,46.1393],[5.9642,46.1445],[5.9922,46.1865],[5.9638,46.1972],[5.9792,46.2173],[5.9928,46.2152],[6.0337,46.2386],[6.0461,46.2314],[6.0881,46.2471],[6.1018,46.2379],[6.1236,46.2506],[6.1028,46.2851],[6.1205,46.2974],[6.12,46.3123],[6.1699,46.3661],[6.0976,46.409],[6.0639,46.4164],[6.0864,46.4439],[6.0728,46.4654],[6.0969,46.4813],[6.1126,46.5096],[6.1567,46.5453],[6.1105,46.5764],[6.1396,46.5976],[6.179,46.6158],[6.2673,46.6762],[6.282,46.6907],[6.3521,46.7149],[6.3851,46.7319],[6.3952,46.7485],[6.4382,46.7618],[6.4584,46.7888],[6.4348,46.8015],[6.4432,46.8327],[6.46,46.8513],[6.4646,46.8904],[6.4327,46.9287],[6.4497,46.936],[6.4965,46.9741],[6.5189,46.971],[6.618,46.9916],[6.6404,47.0028],[6.6592,47.0273],[6.6989,47.0388],[6.7196,47.052],[6.6915,47.0667],[6.703,47.0823],[6.7467,47.0976],[6.7647,47.1204],[6.806,47.1307],[6.8584,47.1654],[6.8804,47.2003],[6.939,47.2307],[6.952,47.2699],[6.9408,47.2865],[7.0077,47.3011],[7.01,47.3245],[7.0456,47.3265],[7.0624,47.3441],[7.0499,47.3614],[7.0122,47.3729],[6.9955,47.3634],[6.9241,47.3552],[6.8836,47.3729],[6.9135,47.3881],[6.9206,47.4051],[6.9384,47.4061],[6.9403,47.4333],[6.9703,47.4471],[6.9959,47.4496],[7.0005,47.4672],[6.986,47.4933],[7.0249,47.5043],[7.0721,47.4924],[7.1122,47.4951],[7.128,47.5039],[7.1593,47.4907],[7.1909,47.4885],[7.1702,47.443],[7.2067,47.4348],[7.2334,47.4386],[7.2454,47.421],[7.2819,47.4348],[7.3387,47.4412],[7.3811,47.432],[7.4031,47.4355],[7.43,47.4595],[7.4557,47.4734],[7.4294,47.4829],[7.435,47.4981],[7.4708,47.4807],[7.5111,47.497],[7.5091,47.5092],[7.5309,47.5268],[7.498,47.5362],[7.5547,47.5644],[7.589,47.5899],[7.6191,47.5769],[7.6457,47.597],[7.6752,47.592],[7.6835,47.5713],[7.6483,47.5599],[7.6509,47.5474],[7.6751,47.5337],[7.7553,47.5463],[7.7963,47.5577],[7.8195,47.5873],[7.8465,47.5824],[7.8694,47.5888],[7.8981,47.5841],[7.9173,47.5477],[7.9478,47.5448],[7.9557,47.5568],[8.0214,47.5503],[8.0673,47.5645],[8.0971,47.5608],[8.1069,47.5806],[8.1652,47.5943],[8.2012,47.6203],[8.2289,47.6055],[8.2579,47.6153],[8.2977,47.6054],[8.2975,47.5895],[8.3246,47.5726],[8.383,47.5658],[8.3994,47.5771],[8.4342,47.5667],[8.4768,47.5779],[8.4605,47.5884],[8.4792,47.6152],[8.5083,47.6175],[8.5165,47.632],[8.5579,47.6245],[8.5631,47.5994],[8.5826,47.5961],[8.6034,47.611],[8.5958,47.643],[8.608,47.6524],[8.6066,47.6721],[8.5777,47.6615],[8.5637,47.67],[8.5269,47.6605],[8.5318,47.6457],[8.5,47.6473],[8.4671,47.6415],[8.4064,47.6762],[8.4046,47.698],[8.4453,47.7231],[8.4501,47.739],[8.489,47.7732],[8.5202,47.7705],[8.5529,47.7846],[8.5664,47.7779],[8.5877,47.8027],[8.6139,47.8012],[8.6194,47.7677],[8.6452,47.765],[8.6455,47.7872],[8.681,47.7866],[8.6887,47.7584],[8.7141,47.7654],[8.7236,47.7456],[8.7112,47.7301],[8.7363,47.7163],[8.728,47.6928],[8.757,47.6896],[8.7834,47.6772],[8.8001,47.6918],[8.7698,47.7184],[8.8067,47.7383],[8.8238,47.711],[8.8458,47.7112],[8.8511,47.6856],[8.8734,47.6702],[8.8754,47.6549],[8.8982,47.6482],[8.9412,47.6562],[9.0207,47.6867],[9.0949,47.6793],[9.1176,47.6688],[9.1567,47.6661],[9.1706,47.6548],[9.2566,47.6587],[9.3947,47.6203],[9.4956,47.5515],[9.5587,47.5419],[9.5626,47.4952],[9.5941,47.4644],[9.6563,47.4537],[9.6443,47.4349],[9.6516,47.4046],[9.6731,47.3919],[9.6567,47.3688],[9.6245,47.3661],[9.6002,47.3463],[9.588,47.3172],[9.5556,47.2975],[9.5307,47.2706],[9.5205,47.244],[9.5017,47.2202],[9.486,47.1805],[9.5082,47.1407],[9.5196,47.0983],[9.5128,47.0851],[9.4741,47.0664],[9.4913,47.0562],[9.5398,47.0651],[9.5569,47.0485],[9.6035,47.0618],[9.6365,47.0517],[9.6451,47.0598],[9.6821,47.0588],[9.7182,47.0434],[9.7481,47.0369],[9.7833,47.0384],[9.8308,47.0143],[9.8794,47.0196],[9.8729,47.0065],[9.8922,46.9903],[9.8711,46.9633],[9.8761,46.9346],[9.9461,46.9123],[9.9779,46.9159],[9.9824,46.9062],[10.0185,46.9008],[10.0526,46.8757],[10.0596,46.8608],[10.0874,46.8612],[10.1052,46.8409],[10.1233,46.8483],[10.1574,46.8479],[10.1937,46.8664],[10.2307,46.8664],[10.2257,46.8959],[10.2417,46.9316],[10.2936,46.9219],[10.3061,46.9403],[10.3547,46.9923],[10.3983,46.9971],[10.4266,46.9757],[10.4286,46.9561],[10.4556,46.9528],[10.4893,46.9378],[10.4862,46.9155],[10.4647,46.8843],[10.4718,46.8488],[10.4566,46.8302],[10.4507,46.8041],[10.4266,46.7894],[10.444,46.7581],[10.4003,46.7332],[10.4188,46.7187],[10.3933,46.6892],[10.391,46.6589],[10.4091,46.6351],[10.4434,46.6394],[10.4843,46.6174],[10.4876,46.5895],[10.4751,46.5663],[10.4722,46.5435],[10.4528,46.5307],[10.4183,46.5513],[10.3971,46.5439],[10.3519,46.5559],[10.2961,46.55],[10.2875,46.5703],[10.2461,46.575],[10.2421,46.5922],[10.2589,46.6104],[10.2242,46.6291],[10.1374,46.6107],[10.1024,46.6107],[10.0956,46.5773],[10.0717,46.559],[10.0535,46.5317],[10.0433,46.4817],[10.0525,46.4604],[10.0419,46.4523],[10.0603,46.4284],[10.1007,46.4213],[10.1289,46.4317],[10.1612,46.4154],[10.164,46.3906],[10.129,46.3787],[10.1291,46.3609],[10.108,46.3515],[10.1045,46.3331],[10.1166,46.3141],[10.1387,46.3047],[10.1623,46.2824],[10.1749,46.2546],[10.146,46.2305],[10.1233,46.2238],[10.1035,46.2286],[10.0709,46.2172],[10.044,46.2296],[10.0606,46.2483],[10.0545,46.2666],[9.9959,46.2849],[10.0008,46.3015],[9.98,46.3231],[9.9959,46.3422],[9.9645,46.3638],[9.9528,46.3793],[9.917,46.3703],[9.9074,46.3809],[9.8803,46.3682],[9.832,46.3605],[9.8183,46.3497],[9.7698,46.3358],[9.7436,46.3512],[9.723,46.3407],[9.7262,46.3195],[9.7145,46.2929],[9.6883,46.2936],[9.677,46.3031],[9.6347,46.286],[9.6104,46.2946],[9.5795,46.2951],[9.5375,46.3093],[9.5135,46.3331],[9.4963,46.3644],[9.4612,46.3759],[9.4688,46.3889],[9.4545,46.4214],[9.4656,46.4695],[9.4585,46.5084],[9.4342,46.4979],[9.4117,46.4669],[9.3905,46.4733],[9.3685,46.4957],[9.3734,46.504],[9.3109,46.5041],[9.2834,46.497],[9.2655,46.4511],[9.2497,46.4311],[9.2754,46.4195],[9.2844,46.3852],[9.2751,46.3737],[9.2961,46.355],[9.2993,46.3275],[9.2815,46.3094],[9.2849,46.297],[9.2588,46.2784],[9.2349,46.2334],[9.2023,46.2084],[9.1947,46.1793],[9.1822,46.1695],[9.1345,46.1533],[9.1215,46.1348],[9.0724,46.118],[9.0896,46.087],[9.0783,46.0653],[9.0502,46.0624],[9.0174,46.05],[9.0076,46.0298],[9.0226,46.0169],[9.0285,45.9936],[8.9939,45.9666],[9.0139,45.9606],[9.0223,45.9375],[9.0766,45.9115],[9.0888,45.8969],[9.0664,45.8754],[9.0309,45.8247],[8.9984,45.8229],[8.9467,45.8426],[8.9142,45.8422],[8.9373,45.8671],[8.9248,45.9037],[8.8933,45.9312],[8.8981,45.9494],[8.8782,45.9566],[8.8391,45.9843],[8.7958,45.9921],[8.7931,46.0081],[8.8282,46.0342],[8.8546,46.0616],[8.8521,46.0756],[8.8153,46.0973],[8.783,46.0941],[8.76,46.1017],[8.7424,46.1223],[8.7138,46.0973],[8.6577,46.1126],[8.648,46.1234],[8.6118,46.1217],[8.5699,46.1769],[8.5404,46.1978],[8.5324,46.2183],[8.4688,46.2329],[8.4434,46.2502],[8.4498,46.2743],[8.4277,46.2983],[8.4437,46.3195],[8.4654,46.3339],[8.4702,46.3624],[8.4609,46.3864],[8.4712,46.3959],[8.4569,46.423],[8.4664,46.4427],[8.4385,46.4643],[8.3847,46.4522]]]);
 
 /*
 ###############################
@@ -210,7 +250,7 @@ var airports_features = {
 var airways_text = [];
 airways_text['un869'] = {
   "title": "Auf zur Sonne",
-  "text": "Lust auf Sonne, Croissant oder Ibérico-Schinken? Gestartet im bayrischen Nürnberg, verläuft die UN869 über Basel quer durch die Schweiz, vorbei an Biel und Neuenburg. In Genf verlässt sie die Schweiz Richtung Frankreich.<br />Über Toulouse geht die Reise weiter nach Spanien. In der Nähe von Madrid vereint sich die UN869 mit der UL27, um im spanischen Málaga ans Ziel zu kommen."
+  "text": "Lust auf Sonne, Croissant oder Ibérico-Schinken? Gestartet im bayrischen Nürnberg, verläuft die UN869 über Basel quer durch die Schweiz, vorbei an Biel und Neuenburg. In Genf verlässt sie die Schweiz Richtung Frankreich. Über Toulouse geht die Reise weiter nach Spanien. In der Nähe von Madrid vereint sich die UN869 mit der UL27, um im spanischen Málaga ans Ziel zu kommen."
 };
 airways_text['un871'] = {
   "title": "Fertig Ferien",
@@ -263,130 +303,69 @@ var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
-  $("#render").on("click", function() {
-    //camera.lookAt(new THREE.Vector3(xzStartpunkt.x, km(100), xzStartpunkt.z));
-    renderer.render( scene, camera );
-  });
-
-  $("#doit").on("click", function() {
-    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x + 4, camera.position.y + 5, camera.position.z - 20)));
-    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x - 4, camera.position.y + 5, camera.position.z - 20)));
-    cameraMovements.push(getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 1)));
-
-    createCameraMovementTween();
-    //Tween
-    //new TWEEN.Tween(camera.rotation, tweenGroupCameras).to({x: newRotationX, y: newRotationY, z: newRotationZ}, 2000);
-
-
-    //animateTweenTracks();
-    //chapter_show_lines();
-    
-  });
-
-  $("#doitback").on("click", function() {
-    console.log("doitback");
-    camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
-    camera.lookAt(new THREE.Vector3(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z - 200));
-    renderer.render( scene, camera );
-  });
-
-  $("#kippen").on("click", function() {
-    console.log("kippen");
-    camera.rotation.x = camera.rotation.x + 0.1;
-    renderer.render( scene, camera );
-  });
-
-  $(".move_camera").on("click", function(e) {
-    console.log(e.target.dataset.x, e.target.dataset.y);
-    camera.rotation.x = camera.rotation.x + parseFloat(e.target.dataset.x);
-    camera.rotation.y = camera.rotation.y + parseFloat(e.target.dataset.y);
-    renderer.render( scene, camera );
-  });
-
-  $("#rendertarget_1").on("click", function(e) {
-
-    console.log("rendertarget1");
-
-
-    var spriteMap = new THREE.TextureLoader().load( "img/plane.png" );
-    var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
-    testobject = new THREE.Sprite( spriteMaterial );
-    testobject.scale.set(32, 32, 1);
-    testobject.position.set(xzStartpunkt.x, groundAltitude + 10, xzStartpunkt.z - km(1));
-    scene.add( testobject );
-    bufferScene.add( testobject );
-
-    //Create Bildschirm
-    var fadeMaterial = new THREE.MeshBasicMaterial({
-      //color: 0xffcc00,
-      transparent: true,
-      opacity: 1,
-      map: rendertarget.texture
-    });
-
-    var fadePlane = new THREE.PlaneBufferGeometry(1, 1);
-    var fadeMesh = new THREE.Mesh(fadePlane, fadeMaterial);
-    fadeMesh.position.set(camera.position.x, camera.position.y, camera.position.z - 0.1);
-    fadeMesh.renderOrder = -1;
-    scene.add(fadeMesh);
-     
-
-    renderer.render(bufferScene, camera, rendertarget);
-    renderer.render( scene, camera );
-  });
-
-
-  $("#rendertarget_2").on("click", function(e) {
-    console.log("rendertarget2");
-
-    testobject.position.y += 1;
-
-    renderer.render(bufferScene, camera, rendertarget);
-    renderer.render( scene, camera );
-
-  });
-
-  $("#play").on("click", function(e) {
-    animateLines();
-  });  
-  $("#play2").on("click", function(e) {
-    createTweensAndStart(lastTrack);
-  });
-
-  $("#count").on("click", function() {
-    renderTracks();
-    render();
-    return;
-    console.log("count");
-    var doIt = true;
-    while(doIt)
+  $(window).on("resize", function() {
+    if(camera && renderer)
     {
-      lastTrack.setMinutes(lastTrack.getMinutes() + 1);
-      renderTimeSerie(lastTrack);
-      
-      if(lastTrack.getHours() == 22)
-        doIt = false;
+      calculateScrollTop();
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      render();
     }
-    renderer.render( scene, camera );
-    console.log("fertig");
   });
 
-  $("#cameratest").on("click", function() {
+  $("#adventuremode").on("click", function() {
+    var btn_old = $("#adventuremode");
+    var btn_new = $("#buttonReload");
 
-    prepareHTMLGrid();
+    //Set Position
+    btn_new.css("left", btn_old.offset().left);
+    btn_new.css("top", btn_old.offset().top - $(window).scrollTop());
+    btn_new.show();
+
+    //Hide old
+    btn_old.css("visibility", "hidden");
+
+    //Start Fadeout
+    $("#content").fadeOut();
+
+    //Start Animation
+    btn_new.addClass("buttonAnimation");
+    setTimeout(function() {
+      btn_new.css("transition", "top 1s, left 1s");
+      btn_new.css("xtransition-timing-function", "ease");
+      btn_new.css("left",0);
+      btn_new.css("top", 0);
+
+      mapend.addControl(new mapboxgl.NavigationControl());
+    }, 0);
+
+    $("span", btn_new).text("Einen anderen Ort wählen")
 
   });
 
-
-  $("#setPosition").on("click", function() {
-    userPositionSelected();
+  $("#buttonReload").on("click", function() {
+    location.reload();
   });
 
-  //PrepareMapbox
+  //Social Buttons
+  $("#share").jsSocials({
+    showLabel: false,
+    showCount: false,
+    url: "https://storytelling.blick.ch/longform/2018/flugrouten/",
+    text: "Am Schweizer Himmel: Ein dichtes Netz von Flugrouten. Wie diese Himmels-Autobahnen organisiert sind, erzählen wir Ihnen aus der Perspektive Ihres Wohnortes.",
+                               
+    shares: [
+        { share: "twitter", via: "blick_visual", hashtags: "flugrouten,skyguide,dataviz" },
+        "facebook"
+    ]
+  });
+
+  //PrepareMapbox Start
   loaderAddCount();
   mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg';
-  map = new mapboxgl.Map({
-    container: 'map',
+  mapstart = new mapboxgl.Map({
+    container: 'mapstart',
     style: 'mapbox://styles/blick-storytelling/cjg6dbhus2vf32sp53s358gud',
     minZoom: 7,
     maxZoom: 20,
@@ -395,10 +374,44 @@ $(document).ready( function() {
     //maxBounds: [[4.730304, 44.300666], [12.021820, 48.831744]]
   });
 
-  map.on('load', function() {
-    map.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
+  mapstart.on('load', function() {
+    mapstart.once('moveend', disableStart);
+    mapstart.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
+
     loaderRemoveCount(); //Mapbox
-    $("#target").show();
+  });
+
+  mapstart.on("dragstart", function() {
+    $("#header, #lead").fadeTo(200, 0);
+    disableStart();
+  });
+
+  mapstart.on("dragend", function() {
+    $("#header, #lead").fadeTo(200, 1);
+    pointInShape()
+  });
+  mapstart.on("zoomstart", function() {
+    disableStart()
+  });
+
+  mapstart.on("zoomend", function() {
+    pointInShape();
+  });
+
+  //PrepareMapbox End
+  loaderAddCount();
+  mapend = new mapboxgl.Map({
+    container: 'mapend',
+    style: 'mapbox://styles/blick-storytelling/cjj8gspfu3ave2slhtb37oemg',
+    minZoom: 7,
+    maxZoom: 20,
+    center: [8.272616, 46.668562],
+    zoom: 7
+    //maxBounds: [[4.730304, 44.300666], [12.021820, 48.831744]]
+  });
+
+  mapend.on('load', function() {
+    loaderRemoveCount(); //Mapbox End
   });
 
   //Prepare THREEJS
@@ -437,29 +450,10 @@ function prepareTHREEJS()
   renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   renderer.alpha = true;
-  //renderer.gammaInput = true;
-  //renderer.gammaOutput = true;
-  //renderer.shadowMap.enabled = true;
-  //document.body.appendChild( renderer.domElement );
+
   $("#threejs").append(renderer.domElement);
 
-  //TEST RENDERTARGET
-  /*
-  bufferScene = new THREE.Scene();
-  rendertarget = new THREE.WebGLRenderTarget();
-  rendertarget.setSize( window.innerWidth, window.innerHeight );
-  */
-
   //Init Lights
-
-  //Init HemisphereLight (color Fading)
-  hemiLight = new THREE.HemisphereLight( 0x0c4fd7, 0xa7bdea, 1 );
-  //hemiLight.color.setHSL( 0.6, 1, 0.6 );
-  //hemiLight.color.setHex(0xffcc00);
-  //hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-  //hemiLight.groundColor.setHex(0x000000);
-  hemiLight.position.set( 0, km(100), 0 );
-  //scene.add( hemiLight );
 
   //Add Sun
   dirLight = new THREE.DirectionalLight( 0xffffff, 0.2 );
@@ -483,6 +477,26 @@ function prepareTHREEJS()
   ground.receiveShadow = true;
   scene.add( ground );
 
+  //Map Tile
+  /*
+  groundTileGeo = new THREE.PlaneBufferGeometry(km(0.25), km(0.25));
+  var groundTileMat = new THREE.MeshPhongMaterial( { color: 0xffcc00, specular: 0xffcc00 });
+
+  var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 18);
+  console.log(url);
+  var groundTileMat = new THREE.MeshBasicMaterial({
+    map: textureLoader.load( url )
+  });
+  groundTileMat.side = THREE.DoubleSide;
+
+
+  groundTile = new THREE.Mesh( groundTileGeo, groundTileMat );
+  groundTile.rotation.x = - Math.PI / 2;
+  groundTile.position.set(xzMittelpunkt.x, groundAltitude + 0.1, xzMittelpunkt.z);
+  groundTile.receiveShadow = true;
+  scene.add( groundTile );
+  */
+
   //Add Skydom
   var vertexShader = document.getElementById( 'vertexShader' ).textContent;
   var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
@@ -493,7 +507,7 @@ function prepareTHREEJS()
     offset:      { value: 33 },
     exponent:    { value: 0.6 }
   };
-  uniforms.topColor.value.copy( hemiLight.color );
+  uniforms.topColor.value = new THREE.Color(0x0c4fd7);
 
   //scene.fog.color.copy( uniforms.bottomColor.value );
 
@@ -527,25 +541,18 @@ function prepareTHREEJS()
     //Calculate XZ
     xzE = latLon2XY(llNullPoint, e.latlon);
 
-    /*
-    //Create Geometry
-    e.geometry = new THREE.BoxGeometry( km(1), km(1), km(1) );
-
-    //Create Mataerial
-    e.material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
-
-    //Create Mesh
-    e.mesh = new THREE.Mesh( e.geometry, e.material );
-    e.mesh.position.set(xzE.x, groundAltitude + getHalfHeightOfObject(e.mesh), xzE.z);
-    scene.add( e.mesh );
-    */
-
     //Create Sprite
     var spriteMap = textureLoader.load( "labels/" + e.img );
     var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
     e.sprite = new THREE.Sprite( spriteMaterial );
-    e.sprite.scale.set(4096, 4096, 1);
-    e.sprite.position.set(xzE.x, groundAltitude + 2048, xzE.z);
+    var e_scale = 1;
+    if(e.style == "label")
+    {
+      var e_scale = 2;
+    }
+
+    e.sprite.scale.set(4096 * e_scale, 4096 * e_scale, 1);
+    e.sprite.position.set(xzE.x, groundAltitude + 2048 * e_scale, xzE.z);
     //e.sprite.position.normalize();
     //e.sprite.position.multiplyScalar( 20000000 );
     scene.add( e.sprite );
@@ -556,11 +563,13 @@ function prepareTHREEJS()
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
 
   //Add Startpoint-Cube (Remove me!)
+  /*
   tmpGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
   tmpMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000} );
   tmpMesh = new THREE.Mesh( tmpGeometry, tmpMaterial );
   tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   scene.add(tmpMesh);
+  */
 }
 
 function rotateCamera(_x, _y, _z, _duration)
@@ -573,7 +582,7 @@ function rotateCamera(_x, _y, _z, _duration)
   animateTween();
 }
 
-function rotateCameraPauseTween(_x, _y, _z, _duration)
+function rotateCameraPauseTween(_x, _y, _z, _duration, _callback)
 {
   stopTweenTracks();
 
@@ -582,6 +591,8 @@ function rotateCameraPauseTween(_x, _y, _z, _duration)
     .easing(TWEEN.Easing.Cubic.Out)
     .onComplete(function() {
       resumeTweenTracks();
+      if(_callback)
+        _callback();
     })
     .start();
 
@@ -606,21 +617,27 @@ function animateTween()
 
 function userPositionSelected()
 {
-  //Change UI
-  $("#target").hide();
-  $("#wait_after_locate").show();
+  
+  //Eigener Thread, damit es angezeigt wird
+  setTimeout(function() {
+    //Change UI
+    $("#target").hide();
+    $("#intro").hide();
+
+    $("#wait_after_locate").show();
+  }, 0);
 
   //Remove Interactivity from Mapbox
-  map.boxZoom.disable();
-  map.scrollZoom.disable();
-  map.dragPan.disable();
-  map.dragRotate.disable();
-  map.keyboard.disable();
-  map.doubleClickZoom.disable();
-  map.touchZoomRotate.disable();
+  mapstart.boxZoom.disable();
+  mapstart.scrollZoom.disable();
+  mapstart.dragPan.disable();
+  mapstart.dragRotate.disable();
+  mapstart.keyboard.disable();
+  mapstart.doubleClickZoom.disable();
+  mapstart.touchZoomRotate.disable();
 
   //Set Startpoint and make a first Render
-  llStartpunkt = new LatLon(map.getCenter().lat, map.getCenter().lng);
+  llStartpunkt = new LatLon(mapstart.getCenter().lat, mapstart.getCenter().lng);
   setCameraPosition(llStartpunkt);
   //camera.rotation.x = 0.9;
   render();
@@ -649,7 +666,7 @@ function userPositionSelected()
   nearest_airports = getNearestAirport(llStartpunkt, 2);
 
   //Copy Airport-section in HTML
-  $(".chapter_airport").clone().insertAfter(".chapter_airport");
+  //$(".chapter_airport").clone().insertAfter(".chapter_airport");
 
   //Prepare Airport 1
   var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name + " span");
@@ -671,17 +688,6 @@ function userPositionSelected()
   //Calculate nearest Airways
   nearest_airways = getNearestLines(llStartpunkt, 3);
   
-  //Set Intro text
-  var intro = $(".airways_intro");
-  intro.html(intro.html().replace(new RegExp("{airway_1_name}", 'g'), nearest_airways[0].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_1_distance}", 'g'), Math.round(nearest_airways[0].properties.distanceToPoint)));
-  
-  intro.html(intro.html().replace(new RegExp("{airway_2_name}", 'g'), nearest_airways[1].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_2_distance}", 'g'), Math.round(nearest_airways[1].properties.distanceToPoint)));
-
-  intro.html(intro.html().replace(new RegExp("{airway_3_name}", 'g'), nearest_airways[2].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_3_distance}", 'g'), Math.round(nearest_airways[2].properties.distanceToPoint)));
-
   //Fill airways
   fillAirwayDiv(0);
   fillAirwayDiv(1);
@@ -690,11 +696,17 @@ function userPositionSelected()
 
 function fillAirwayDiv(_nr)
 {
+  //Set Intro Text
+  var intro = $(".airways_intro");
+  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_name}", 'g'), nearest_airways[_nr].properties.name.toUpperCase()));
+  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_distance}", 'g'), Math.round(nearest_airways[_nr].properties.distanceToPoint)));
+  $(".airways_intro #airway_short_" + _nr).addClass("color_" + nearest_airways[_nr].properties.name);
+
   aw = airways_text[nearest_airways[_nr].properties.name];
   $(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").text(aw.title);
   $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").addClass("color_" + nearest_airways[_nr].properties.name);
   $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").text(nearest_airways[_nr].properties.name.toUpperCase());
-  $(".chapter_airways_" + _nr + " .chapter_content .route_text").text(aw.text);
+  $(".chapter_airways_" + _nr + " .chapter_content .route_text").html(aw.text);
 }
 
 function prepareHTMLGrid(_placeName)
@@ -733,12 +745,21 @@ function prepareHTMLGrid(_placeName)
           {
             //Run event
             lastChapter = k;
-            chapterEvents[k]();
+
+            //Check, if not already fired
+            if(calledChapters.indexOf(k) == -1)
+            {
+              chapterEvents[k]();
+              calledChapters.push(k);
+            }
           }
           break;
         }
       }
     });
+
+    //Show scroller
+    $("#scroller").show();
   });
 }
 
@@ -774,8 +795,15 @@ function setCameraPosition(_llStart)
 {
   xzStartpunkt = latLon2XY(llNullPoint, _llStart);
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
-  tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
+  //tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
+
+  /*
+  groundTile.position.set(xzStartpunkt.x, groundAltitude + 0.5, xzStartpunkt.z);
+  var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 15);
+  groundTile.material.map = textureLoader.load( url );
+  groundTile.needsUpdate = true;
+  */
 }
 
 
@@ -809,29 +837,6 @@ function getNewCameraRotation(_vector3)
 
     return {x: newRotationX, y: newRotationY, z: newRotationZ};
 }
-
-/*
-var cameraMovements = [];
-var lastCameraMovement = -1;
-
-function createCameraMovementTween()
-{
-  if(lastCameraMovement >= cameraMovements.length - 1)
-    lastCameraMovement = 0
-  else
-    lastCameraMovement++;
-
-  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
-  .to({x: cameraMovements[lastCameraMovement].x, y: cameraMovements[lastCameraMovement].y, z: cameraMovements[lastCameraMovement].z}, 10000)
-  .easing(TWEEN.Easing.Quadratic.InOut)
-  .onComplete(function() {
-    setTimeout(createCameraMovementTween, 10);
-
-  })
-  .start();
-}
-*/
-
 
 function loadAirwaysJson(data)
 {
@@ -1062,7 +1067,6 @@ function renderTracks()
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
 }
-*/
 
 function renderTimeSerie(_timestamp)
 {
@@ -1095,6 +1099,7 @@ function renderTimeSerie(_timestamp)
   }
 }
 
+*/
 
 /*
 function getRandomColor() {
@@ -1144,10 +1149,8 @@ function loaderRemoveCount()
   }
   else if(loaderCounter == 0)
   {
-    console.log("Everything loaded. Remove loader")
-    
-    //Do something
-
+    $("#maploader").fadeOut(200);
+    $("#target").show();
   }
 }
 
@@ -1169,7 +1172,7 @@ function createTweensAndStart(_serie)
   //###Set Startpoint of each Sprite
 
   timestampAsString = ('0' + _serie.getHours()).substr(-2) + ":" + ('0' + _serie.getMinutes()).substr(-2)  + ":00";
-  console.log(timestampAsString);
+  //console.log(timestampAsString);
 
   //calculate next Timestamp
   var dateNext = new Date(_serie.getTime());
@@ -1197,7 +1200,7 @@ function createTweensAndStart(_serie)
     //Change Light Color (0.2 -> 0.6)
     dirLight.intensity += 0.4 * colorRatio;
   }
-  else if(_serie.getHours() >= 21 && _serie.getHours() <= 22)
+  else if(_serie.getHours() >= 19 && _serie.getHours() <= 20)
   {
     skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r - colorRatio, skyMat.uniforms.bottomColor.value.g - colorRatio, skyMat.uniforms.bottomColor.value.b - colorRatio);
     
@@ -1269,6 +1272,12 @@ function createTweensAndStart(_serie)
 var animationCanRun = true;
 function animateTweenTracks()
 {
+  if(lastTrack.getHours() >= 23 && lastTrack.getMinutes() >= 50)
+  {
+    render();
+    return;
+  }
+
   var doRender = false;
   if(tweenGroupPoints.getAll().length > 0)
   {
@@ -1293,7 +1302,7 @@ function animateTweenTracks()
   if(doRender)
     requestAnimationFrame( animateTweenTracks );
 
-  renderer.render( scene, camera );
+  render();
 }
 
 function stopTweenTracks()
@@ -1354,6 +1363,30 @@ function render()
   renderer.render( scene, camera );
 }
 
+function pointInShape()
+{
+  var pt = turf.point([mapstart.getCenter().lng, mapstart.getCenter().lat]);
+
+  if(turf.booleanPointInPolygon(pt, shape_switzerland))
+  {
+    enableStart();
+  }
+}
+
+function enableStart()
+{
+  $("#setPosition").addClass("btn_n");
+  $("#setPosition").removeClass("btn_n_inactive");
+  $("#setPosition").on("click", userPositionSelected);
+}
+
+function disableStart()
+{
+  $("#setPosition").addClass("btn_n_inactive");
+  $("#setPosition").removeClass("btn_n");
+  $("#setPosition").off("click");
+}
+
 /*
 ###############################
 
@@ -1364,10 +1397,12 @@ function render()
 
 function chapter_startTHREE()
 {
+  $("#scroller").fadeOut();
+
   //Register event after flying
-  map.once('moveend', function() {
+  mapstart.once('moveend', function() {
     //Animation ended
-    $("#map").fadeOut();
+    $("#mapstart").fadeOut();
     render();
     if(bearing == 0)
     {
@@ -1395,12 +1430,18 @@ function chapter_startTHREE()
   }
 
   //Lets Fly!
-  map.flyTo({
+  mapstart.flyTo({
     center: [llStartpunkt.lon, llStartpunkt.lat],
     pitch: 60,
     zoom: 16,
     duration: 3000,
     bearing: bearing
+  });
+
+  //Position aswell the end map
+  mapend.jumpTo({
+    center: [llStartpunkt.lon, llStartpunkt.lat],
+    zoom: 16,
   });
 }
 
@@ -1502,38 +1543,45 @@ function chapter_after_airways()
 {
   var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 20));
   //rotateCameraPauseTween(newRotation.x, newRotation.y, newRotation.z, 2000);
+
 }
 
 function chapter_load_heatmap()
 {
-  map.once("data", function() {
-    console.log("data");
-  });
-
-  map.once("load", function() {
-    console.log("data");
-  });
-  map.setStyle('mapbox://styles/blick-storytelling/cjj8gspfu3ave2slhtb37oemg');
   stopTweenTracks();
-  $("#threejs").fadeOut();
-  $("#map").fadeIn();
+  $("#timeline").fadeOut();
 
-  //Enable Interactivity from Mapbox
-  map.boxZoom.enable();
-  map.scrollZoom.enable();
-  map.dragPan.enable();
-  map.dragRotate.enable();
-  map.keyboard.enable();
-  map.doubleClickZoom.enable();
-  map.touchZoomRotate.enable();
+  var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, groundAltitude - 50, camera.position.z - 10));
+  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
+    .to({x: newRotation.x, y: newRotation.y, z: newRotation.z}, 1500)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(function() {
+      //Enable Camera     
 
-  map.flyTo({
-    center: [llMittelpunkt.lon, llMittelpunkt.lat],
-    pitch: 0,
-    zoom: 8,
-    duration: 1000,
-    bearing: 0
-  });
+      $("#threejs").fadeOut();
+      $("#mapend").css("visibility", "visible");
+    
+      //Enable Interactivity from Mapbox
+      mapend.boxZoom.enable();
+      mapend.scrollZoom.enable();
+      mapend.dragPan.enable();
+      mapend.dragRotate.enable();
+      mapend.keyboard.enable();
+      mapend.doubleClickZoom.enable();
+      mapend.touchZoomRotate.enable();
+    
+      mapend.flyTo({
+        center: [llMittelpunkt.lon, llMittelpunkt.lat],
+        pitch: 0,
+        zoom: 8,
+        duration: 3000,
+        bearing: 0
+      });
+
+    })
+    .start();
+  animateTween();
+
 
   //map.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
 }
@@ -1638,3 +1686,22 @@ function latLon2XY(_nullPoint, _point)
 }
 
 
+
+/**** LATLONG TO XYZ ****/
+/*
+Number.prototype.toRad = function() {
+  return this * Math.PI / 180;
+}
+
+function getTileURL(lat, lon, zoom) {
+  var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
+  var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
+  //return {x: xtile, y: ytile, z: zoom};
+  //return "https://api.mapbox.com/styles/v1/blick-storytelling/cjg6dbhus2vf32sp53s358gud/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg"
+  //return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  //return "https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/256/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  //return "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  //return "https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+}
+*/

@@ -4,23 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Über den Wolken - So ist der Luftraum über der Schweiz organisiert</title>
+  <title>Gewimmel am Himmel - So ist der Schweizer Luftraum organisiert</title>
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.css' rel='stylesheet' />
   <script src="lib/three.min.js" defer="true"></script>
-  <script src="lib/THREE.MeshLine.js" defer="true"></script>
-  <script src="lib/TrailRenderer.js" defer="true"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" defer="true"></script>
   <script src="lib/turf.min.js" defer="true"></script>
   <script src="lib/tween.min.js" defer="true"></script>
   <script src="js/main.js" defer="true"></script>
+  <!--
+  <script src="js/main.min.js" defer="true"></script>
+  -->
 
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="css/main.css">
-
-  <!-- RAUS!!! -->
-  <script src="lib/OrbitControls.js" defer="true"></script>
-
 
   <style>
     canvas { width: 100%; height: 100% }
@@ -60,22 +57,7 @@
 
   </script>
 
-  <div style="position: fixed; z-index:10000; top:0px;">
-    <button id='render'>Render</button>
-    <button id="doit">Do it</button>
-    <button id="doitback">Do it back</button>
-    <button id="kippen">kippen</button>
-    <button id="count">+1</button>
-    <button id="play">play</button>
-    <button id="play2">play2</button>
-    <button class="move_camera" data-x=0.1 data-y=0>^</button>
-    <button class="move_camera" data-x=-0.1 data-y=0>v</button>
-    <button class="move_camera" data-x=0 data-y=0.1><</button>
-    <button class="move_camera" data-x=0 data-y=-0.1>></button>
-    <button id="rendertarget_1">1</button>
-    <button id="rendertarget_2">2</button>
-    <button id="cameratest">cameratest</button>
-  </div>
+  <button id="buttonReload" class="btn_n btn_mouse"><span>Entdecker-Modus einschalten</span></button>
 
   <div id="wait_after_locate" class="please_wait content_box">
     <h2>Danke!</h2>
@@ -86,42 +68,83 @@
     <img src="img/timeline.png">
     <div id="timeline_point"></div>
   </div>
+
+  <div id="intro">
+    <div id="logo"><a href="https://www.blick.ch/interaktiv/" class="header_image"><img src="https://storytelling.blick.ch/longform/resources/v1/img/blick.png" class="logo" alt="BLICK"></a></div>
+    <div id="header"><img src="img/header.png"></div>
+    <div id="lead" class="content_box">
+      <p>
+        Wir erzählen Ihnen, wie der Luftraum über Ihrem Wohnort aussieht. <b>Verschieben Sie dazu die Karte so, dass das Fadenkreuz auf den gewünschten Ort zeigt.</b> Klicken Sie anschliessend «Reise an diesem Ort beginnen», um den Schweizer Luftraum zu entdecken.
+      </p>
+      <p>
+          <button id="setPosition" class="btn_n btn_mouse btn_n_inactive"><span>Reise an diesem Ort beginnen</span></button>
+      </p>
+    </div>
+
+  </div>
+
+  <section id="scroller">
+    <a>
+      <span class="scroller_text">zum Fortfahren scrollen</span>
+      <span class="arrow"></span>
+    </a>
+  </section>
   
   <div id="fixchart"></div>
 
   <div id="content">
+
+    <div class="chapter_space_top"></div>
+
     <div class="chapter">
       <div class="chapter_content content_box">
         <h2 class="has_place">Hallo nach {place_name}!</h2>
         <h2 class="has_no_place">Hallo!</h2>
-        <span class="has_place">Es soll schön sein in der Umgebung von {place_name}! Doch richten wir den Blick gegen den Himmel. Wie sieht der Himmel über {place_name} aus?</span>         
-        <span class="has_no_place">Es soll schön sein an Ihrem gewählten Ort. Doch richten wir den Blick gegen den Himmel. Doch wie sieht der Himmel an Ihrem Ort aus?</span>
-        Scrollen du musst!
+ 
+        <span class="has_place">Stellen Sie sich vor, Sie liegen auf einer Wiese in {place_name}.</span>
+        <span class="has_no_place">Stellen Sie sich vor, Sie liegen auf einer Wiese an Ihrem gewählten Ort.</span>
+        Ihr Blick richtet sich auf den blauen Himmel über Ihnen. Vereinzelt ziehen flockige Wolken am sonst strahlend blauen Himmel vorbei. Flugzeuge malen mit ihrem Pinsel aus Kondensstreifen auf die blaue Himmelsleinwand. Woher kommen diese Jets? Wohin gehen sie? Auf welchen Bahnen durchqueren sie die Schweiz?
+        <br />
+        
+        <span class="has_place">Finden wir es gemeinsam heraus und beobachten wir für einen Tag den Himmel über {place_name}.</span>
+        <span class="has_no_place">Finden wir es gemeinsam heraus und beobachten wir für einen Tag den Himmel.</span>
+
       </div>
     </div>
+
+    <div class="chapter_space"></div>
+
     <div id="chapter_startTHREE" class="chapter">
       <div class="chapter_content content_box">
         <h2>Highways</h2>
         <span class="has_place">Über {place_name} zeigt sich ein dichtes Netz von Flugrouten.</span>
         <span class="has_no_place">Am Himmel zeigt sich ein dichtes Netz von Flugrouten.</span>
-        Hier dargestellt: Die Super-Autobahnen, jene Flugrouten, über die der meiste Passagierverkehr gelotst wird. Egal ob ein Airliner die Schweiz nur durchqueren oder in der Schweiz landen will, auf eine dieser Routen muss er sich einreihen. Und wie auf der Strasse führt jede Spur nur in eine Richtung.
-      </div>
-    </div>
-    <div class="chapter">
-      <div class="chapter_content content_box">
-        <h2>Nachtflugverbot</h2>
-        <span class="has_place">Noch ist es aber ruhig in {place_name}.</span>
-        <span class="has_no_place">Noch ist es aber ruhig.</span>
-        Das Nachtflugverbot gilt zwischen 23 Uhr Abends und 6 Uhr Morgens. In dieser Zeit darf nur mit Ausnahme auf Schweizer Flughäfen gelandet oder gestartet werden. Um sechs Uhr ist es dann soweit, die ersten Jets heben ab. Lassen wir die Flugzeuge starten.
+        Denn obwohl Flügel frei machen sollen, dürfen Passagierflugzeuge die Schweiz nicht nach Belieben durchqueren. Farbig dargestellt sehen Sie die Super-Autobahnen über Ihnen, also jene Flugrouten, über die der meiste Passagierverkehr gelotst wird. Sei es nach Berlin, Mallorca oder Gran Canaria, auf eine dieser Strassen müssen sich die Jets einreihen. Damit sich die Jets nicht in die Quere kommen, führt jede Route nur in eine Richtung.
       </div>
     </div>
 
-    <div id="chapter_timelaps_slow" class="chapter">
-      <div class="chapter_content content_box clearfix">
-        <img src="img/flugbewegungen.jpg" class="imageright">
-        54'911'905 Passagiere haben Schweizer Flughäfen 2017 transportiert. Das sind 60 Prozent mehr als im Jahr 2000. 460'000 Landungen und Starts in einem Jahr! Am meisten Starts und Landungen verzeichnen die drei Flughäfen Zürich, Genf und Basel-Mulhouse.
+    <div class="chapter_space"></div>
+
+    <div class="chapter">
+      <div class="chapter_content content_box">
+        <h2>Nachtflugverbot</h2>
+        <span class="has_place">Noch ist es aber ruhig über {place_name}.</span>
+        <span class="has_no_place">Noch ist es aber ruhig.</span>
+        Das Nachtflugverbot untersagt Flugzeugen, zwischen 23 Uhr abends und 6 Uhr morgens auf Schweizer Flughäfen zu landen oder zu starten. Um sechs Uhr ist es dann so weit, die ersten Jets schwingen sich in die Luft, ihrem entfernten Ziel entgegen. Lassen wir die Flugzeuge starten.
       </div>
     </div>
+
+    <div class="chapter_space"></div>
+
+    <div id="chapter_timelaps_slow" class="chapter">
+      <div class="chapter_content content_box clearfix">
+        <h2>460'000 Landungen</h2>
+        <p>Momentan sehen Sie die Flugbewegungen eines vollen Tages im Schnelldurchlauf. Bevor wir uns die Strassen über Ihnen genauer anschauen, werfen wir den Blick auf den Ursprung jeder Flugreise: Den Flughafen. Im letzten Jahr haben Schweizer Flughäfen insgesamt 54'911'905 Passagiere transportiert. Das sind 60 Prozent mehr als im Jahr 2000. 460'000 Landungen und Starts in einem Jahr! Am meisten beansprucht werden die Pisten von Zürich, Genf und Basel-Mulhouse.</p>
+        <p><img src="img/flugbewegungen.jpg" class="imagecenter"></p>
+      </div>
+    </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_airport_1" class="chapter">
       <div class="chapter_content content_box">
@@ -130,31 +153,36 @@
         <div class="airport_zurich clearfix">
           <img src="img/airport_shape_zurich.jpg" class="imageright">
           <h2>Das Fenster in die Ferne</h2>
-          <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Zürich. Etwa {airport_1_distance}km trennen {place_name} vom Flughafen.</span>
-          <span class="has_no_place">Am nächsten liegt der Flughafen Zürich. Etwa {airport_1_distance}km sind es von hier bis zum Flughafen.</span>
+          <span class="has_place">Der nächste der drei Flughäfen ist der Flughafen Zürich. Zwischen {place_name} und dem Flughafen liegen etwa {airport_1_distance}km.</span>
+          <span class="has_no_place">Der nächste der drei Flughäfen ist der Flughafen Zürich. Er liegt etwa {airport_1_distance}km entfernt.</span>
           An Spitzentagen während der Sommerferien gehen rund 750 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 650 Flüge.
+          <p><img src="img/airport_shape_zurich.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Genf -->
         <div class="airport_geneva clearfix">
           <img src="img/airport_shape_geneva.jpg" class="imageright">
           <h2>Die Nummer zwei</h2>
-          <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Genf. Etwa {airport_1_distance}km trennen {place_name} vom Flughafen.</span>
-          <span class="has_no_place">Am nächsten liegt der Flughafen Genf. Etwa {airport_1_distance}km sind es von hier bis zum Flughafen.</span>
-          An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 259 Flüge.
+          <span class="has_place">Der nächste der drei Flughäfen ist der Flughafen Genf. Zwischen {place_name} und dem Flughafen liegen etwa {airport_1_distance}km.</span>
+          <span class="has_no_place">Der nächste der drei Flughäfen ist der Flughafen Genf. Er liegt etwa {airport_1_distance}km entfernt.</span>
+          An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Genf weg. Über das Jahr sind es durchschnittlich 259 Flüge.
+          <p><img src="img/airport_shape_geneva.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Basel -->
         <div class="airport_bale clearfix">
           <img src="img/airport_shape_bale.jpg" class="imageright">
-          <h2>Die Nummer drei</h2>
-          <span class="has_place">Am nächsten von {place_name} entfernt liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km trennen {place_name} vom Flughafen.</span>
-          <span class="has_no_place">Am nächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_1_distance}km sind es von hier bis zum Flughafen.</span>
-          An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 95 Flüge.
+          <h2>Der drittgrösste Flughafen</h2>
+          <span class="has_place">Der nächste der drei Flughäfen ist der Flughafen Basel-Mulhouse. Zwischen {place_name} und dem Flughafen liegen etwa {airport_1_distance}km.</span>
+          <span class="has_no_place">Der nächste der drei Flughäfen ist der Flughafen Basel-Mulhouse. Er liegt etwa {airport_1_distance}km entfernt.</span>
+          An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Basel-Mulhouse weg. Über das Jahr sind es durchschnittlich 95 Flüge.
+          <p><img src="img/airport_shape_bale.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
 
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div class="chapter airport_destination_1">
       <div class="chapter_content content_box">
@@ -169,7 +197,7 @@
         <!-- Bale -->
         <div class="airport_bale">
           <h2>Von Basel nach Algier</h2>
-          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 540'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
+          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 220'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
           <p><img src="img/airport_target_bale.png" class="imagecenter"></p>
         </div>
 
@@ -183,6 +211,8 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_airport_2" class="chapter">
       <div class="chapter_content content_box">
 
@@ -190,30 +220,36 @@
         <div class="airport_zurich clearfix">
           <img src="img/airport_shape_zurich.jpg" class="imageright">
           <h2>Das Fenster in die Ferne</h2>
-          <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Zürich. Etwa {airport_2_distance}km trennen {place_name} vom Flughafen.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Zürich. Etwa {airport_2_distance}km sind es von hier bis zum Flughafen.</span>
+          <span class="has_place">Der zweitnächste Flughafen ist der Flughafen Zürich. Etwa {airport_2_distance}km trennen ihn von {place_name}.</span>
+          <span class="has_no_place">Der zweitnächste Flughafen ist der Flughafen Zürich. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
           An Spitzentagen während der Sommerferien gehen rund 750 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 650 Flüge.
+          <p><img src="img/airport_shape_zurich.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Genf -->
         <div class="airport_geneva clearfix">
           <img src="img/airport_shape_geneva.jpg" class="imageright">
           <h2>Die Nummer zwei</h2>
-          <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Genf. Etwa {airport_2_distance}km trennen {place_name} vom Flughafen.</span>
-          <span class="has_no_place">Am zweitnächsten liegt der Flughafen Genf. Etwa {airport_2_distance}km sind es von hier bis zum Flughafen.</span>
-          An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 259 Flüge.
+          <span class="has_place">Der zweitnächste Flughafen ist der Flughafen Genf. Etwa {airport_2_distance}km trennen ihn von {place_name}.</span>
+          <span class="has_no_place">Der zweitnächste Flughafen ist der Flughafen Genf. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
+          An Spitzentagen während der Sommerferien gehen rund 316 Linien- oder Charterflüge von Genf weg. Über das Jahr sind es durchschnittlich 259 Flüge.
+          <p><img src="img/airport_shape_geneva.jpg" class="imagecenter imagecenter_airport"></p>
         </div>
         
         <!-- Basel -->
         <div class="airport_bale clearfix">
-            <img src="img/airport_shape_bale.jpg" class="imageright">
-            <h2>Die Nummer drei</h2>
-            <span class="has_place">Am zweitnächsten von {place_name} entfernt liegt der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km trennen {place_name} vom Flughafen.</span>
-            <span class="has_no_place">Am zweitnächsten liegt der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km sind es von hier bis zum Flughafen.</span>
-            An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Zürich weg. Über das Jahr sind es durchschnittlich 95 Flüge.
-          </div>
+          <img src="img/airport_shape_bale.jpg" class="imageright">
+          <h2>Der drittgrösste Flughafen</h2>
+          <span class="has_place">Der zweitnächste Flughafen ist der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km trennen ihn von {place_name}.</span>
+          <span class="has_no_place">Der zweitnächste Flughafen ist der Flughafen Basel-Mulhouse. Etwa {airport_2_distance}km sind es von hier bis zum Gate.</span>
+          An Spitzentagen während der Sommerferien gehen rund 110 Linien- oder Charterflüge von Basel-Mulhouse weg. Über das Jahr sind es durchschnittlich 95 Flüge.
+          <p><img src="img/airport_shape_bale.jpg" class="imagecenter imagecenter_airport"></p>
+        </div>
+
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div class="chapter airport_destination_2">
       <div class="chapter_content content_box">
@@ -228,7 +264,7 @@
         <!-- Bale -->
         <div class="airport_bale">
           <h2>Von Basel nach Algier</h2>
-          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 540'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
+          <p>London und Berlin sind die europäischen Top-Destinationen, welche vom Flughafen Basel-Mulhouse aus angeflogen werden. Über 270'000 Personen haben die englische Hauptstadt besucht. Nach Berlin zog es über 220'000 Personen. Übersee liegt Algier, die Hauptstadt Algeriens, gefolgt von Tel Aviv und Marrakesch auf den Top-Plätzen.</p>
           <p><img src="img/airport_target_bale.png" class="imagecenter"></p>
         </div>
 
@@ -242,15 +278,21 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
 
     <div class="chapter">
       <div class="chapter_content content_box airways_intro">
-        <span class="has_place">Über {place_name} führen verschiedene Luftrouten in die weite Welt hinaus.</span>
-        <span class="has_no_place">Über Ihrem Ort führen verschiedene Luftrouten in die weite Welt hinaus.</span>
-        Am nächsten liegt die <b>{airway_1_name}</b>. Nur etwa {airway_1_distance}km entfernt ist sie. Auch die <b>{airway_2_name}</b> liegt mit {airway_2_distance}km in Ihrer Nähe. Auch in Ihrer Umgebung, aber etwas weiter entfernt: Die {airway_3_distance}km entfernt liegende <b>{airway_3_name}</b>.<br />
+        <h2>Geordnetes Chaos</h2>
+        
+        <span class="has_place">Werfen wir nun einen Blick in den Himmel über {place_name}.</span>
+        <span class="has_no_place">Werfen wir nun einen Blick in den Himmel.</span>
+        Verschiedene Luftstrassen führen in die weite Welt hinaus.
+        Am nächsten liegt die <b id="airway_short_0" class="label_route">{airway_0_name}</b>. Nur etwa {airway_0_distance}km entfernt ist sie. Auch die <b id="airway_short_1" class="label_route">{airway_1_name}</b> liegt mit {airway_1_distance}km in Ihrer Nähe. Auch in Ihrer Umgebung, aber etwas weiter entfernt: Die {airway_2_distance}km entfernt liegende <b id="airway_short_2" class="label_route">{airway_2_name}</b>.<br />
         Schauen wir uns die drei Strassen genauer an.
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_nearest_airway_0" class="chapter chapter_airways_0">
       <div class="chapter_content content_box">
@@ -259,12 +301,16 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_nearest_airway_1" class="chapter chapter_airways_1">
       <div class="chapter_content content_box">
         <h2><span class="label_route">NR</span><span class="route_title">Route 2</span></h2>
         <span class="route_text">Text Route 1</span>
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_nearest_airway_2" class="chapter chapter_airways_2">
       <div class="chapter_content content_box">
@@ -273,45 +319,106 @@
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_after_airways" class="chapter">
       <div class="chapter_content content_box">
         <h2>Luftrouten</h2>
-        Der gesamte Schweizer wie auch internationale Luftverkehr funktioniert in sogenannten Flight Levels (FL) und auf festgelegten Luftrouten. Wie auf einer unsichtbaren Autobahn reihen sich Flugzeuge auf einem ihnen zugewiesenen Flight Level in die Luftroute ein. Die Mindestabstände (Staffelungen) dürfen keinesfalls unterschritten werden, die geflogenen Abstände sind aber in den allermeisten Fällen viel grösser.
+        Diese Strassen werden in der Schweiz und auch im internationalen Luftverkehr in sogenannten Flight Levels (FL) eingeteilt. Wie auf einer unsichtbaren Autobahn reihen sich Flugzeuge auf einem ihnen zugewiesenen Flight Level in die Luftroute ein. Die Mindestabstände (Staffelungen) dürfen keinesfalls unterschritten werden, die geflogenen Abstände sind aber in den allermeisten Fällen viel grösser.
         <p><img src="img/flightlevels.png" class="imagecenter"></p>
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div class="chapter">
       <div class="chapter_content content_box">
-        <h2>Luftrouten</h2>
-        Verschiedene Fluglotsen koordinieren und überwachen jährlich rund 1,2 Millionen Flugzeuge im Schweizer Luftraum. Bei uns ist diese Aufgabe besonders komplex, denn der Luftraum ist dicht beflogen und rund zwei Drittel aller Flüge befinden sich im Steig- oder Sinkflug.
+        <h2>Verkehrswächter</h2>
+        Für Ordnung am Himmel sorgen verschiedene Fluglotsen. Jährlich überwachen sie rund 1,2 Millionen Flugzeuge im Schweizer und im angrenzenden Luftraum. Bei uns ist diese Aufgabe besonders komplex, denn der Luftraum ist dicht beflogen und rund zwei Drittel aller Flüge befinden sich im Steig- oder Sinkflug.
         <p><img src="img/radarlosten.png" class="imagecenter"></p>
       </div>
     </div>
 
+    <div class="chapter_space"></div>
+
     <div id="chapter_show_lines" class="chapter">
       <div class="chapter_content content_box">
-        Der Tag neigt sich dem Ende zu. Blieben alle Kondensstreifen der Flugzeuge eines Tages am Himmel stehen, würde ein dichtes Netz den Schweizer Himmel überziehen.
+        <h2>Weben mit Wasserdampf</h2>
+        Dieses Gewimmel am Himmel zeigt sich eindrücklich, wenn wir die Kondensstreifen aller Flugzeuge eines ganzen Tages am Himmel stehen lassen. Ein dicht gewobenes Netz überzieht nun den gesamten Schweizer Luftraum.
       </div>
     </div>
+
+    <div class="chapter_space"></div>
 
     <div id="chapter_load_heatmap" class="chapter">
       <div class="chapter_content content_box">
-        Unsere Reise ist zu Ende. Ein Tag voller Flugbewegungen liegt vor Ihnen auf der Karte. Entdecken Sie diese selbst, in dem Sie die Karte bewegen oder vergrössern.
+        <h2>Die Nacht bricht ein</h2>
+        <p>
+          Nachdem Tausende Passagiere von Zürich, Genf, Basel-Mulhouse oder kleineren Flughäfen abgefertigt wurden, neigt sich unser Tag dem Ende zu. Das dichte Netz der Flugbewegungen eines vollen Tages sehen wir jetzt aus der Vogelperspektive. Rote Gebiete bedeuten, dass da besonders viele Flugzeuge durchgeflogen sind. Sie können die Karte nun selbst entdecken. Bewegen und zoomen Sie die Karte, nachdem Sie den Entdecker-Modus eingeschaltet haben.
+        </p>
+        <p style="text-align: center">
+          <button id="adventuremode" class="btn_n btn_mouse"><span>Entdecker-Modus einschalten</span></button>
+        </p>
       </div>
     </div>
+    <div class="chapter">
+        <div class="chapter_content content_box box_credits">
 
-    <div class="chapter">lsdf</div>
-    <div class="chapter">lsdf</div>
+          <div id="share"></div>
+          
+          <p>
+            <b>Eine Produktion von:</b><br />
+            Simon Huwiler, Priska Wallimann, Marcel Aerni, Janine Gygax
+          </p>
+          <p>
+            <b>Feedback:</b><br />
+            <a href="mailto:storytelling@ringier.ch?subject=Gewimmel am Himmel" target="_blank">storytelling@ringier.ch</a>
+          </p>
+          <p>
+            <b>Quellen:</b><br />
+            <a href="https://opensky-network.org/" target="_blank">opensky-network.org</a>, Skyguide, BfS, Flughafen Zürich AG, EuroAirport Basel, Genève Aéroport
+          </p>
+          <p>
+            <b>Flugzeugdaten:</b><br />
+            21.05.2018
+          </p>
+          <p>
+            <b>Publikation:</b><br />
+            Juli 2018
+          </p>
+        </div>
+      </div>
   </div>
 
-  <div id="map">
+  <div class="chapter_space_top"></div>
+
+  <div id="mapstart" class="map">
+    <div id="maploader">
+        <div class="loader">
+          <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                width="40px" height="40px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+            <path fill="#000" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
+              <animateTransform attributeType="xml"
+                attributeName="transform"
+                type="rotate"
+                from="0 25 25"
+                to="360 25 25"
+                dur="0.6s"
+                repeatCount="indefinite"/>
+            </path>
+          </svg>
+        </div>
+    </div>
     <div id="target">
-      <span id="setPosition">Mit dieser Position starten</span>
     </div>
   </div>
 
+  <div id="mapend" class="map"></div>
+
   <div id="threejs"></div>
+
+
+  <script src="https://storytelling.blick.ch/longform/resources/v1/js/jssocials.min.js" defer="true"></script>
 
 </body>
 </html>
