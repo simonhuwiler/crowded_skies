@@ -1,12 +1,7 @@
 /*
 
   ToDo:
-  * Timeline
-  * Metazeugs
-  * Für Social zeugs
-  * Minify
-  * tracker!
-
+  * Minify!!
 
 */
 
@@ -788,7 +783,7 @@ function prepareHTMLGrid(_placeName)
 function calculateScrollTop()
 {
   //Calculate Scrolloffset
-  var scrollOffset = $(window).height() - 200;
+  var scrollOffset = $(window).height() + 200;
 
   //Put keys in an extra array and reverse it
   var keys = [];
@@ -826,14 +821,7 @@ function setCameraPosition(_llStart)
   groundTile.material.map = textureLoader.load( url );
   groundTile.needsUpdate = true;
   */
-
- var size = km(100);
- var divisions = 50000;
  
- var gridHelper = new THREE.GridHelper( size, divisions, 0x98bd71, 0x98bd71 );
- gridHelper.position.set(xzStartpunkt.x, groundAltitude + 1, xzStartpunkt.z);
- //scene.add( gridHelper );
-
 }
 
 
@@ -1219,6 +1207,7 @@ function createTweensAndStart(_serie)
   */
   var minAbsolute = _serie.getHours() * 60 + _serie.getMinutes();
   $("#timeline_point").css("left", ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%"); 
+  $("#timeline_mobile_point").css("left", ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%"); 
 
   //Sunrise/Sunset
   var colorRatio = 1 / 120;
@@ -1487,6 +1476,7 @@ function chapter_timelaps_slow()
   lastTrack.setSeconds(0);
   createTweensAndStart(lastTrack);
   $("#timeline").fadeIn();
+  $("#timeline_mobile").fadeIn();
 }
 
 function chapter_show_lines_animate_opacity()
@@ -1585,6 +1575,7 @@ function chapter_load_heatmap()
 {
   stopTweenTracks();
   $("#timeline").fadeOut();
+  $("#timeline_mobile").fadeOut();
 
   var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, groundAltitude - 50, camera.position.z - 10));
   new TWEEN.Tween(camera.rotation, tweenGroupCameras)

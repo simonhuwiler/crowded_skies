@@ -56,6 +56,7 @@ svg path, svg rect
 
 #mapend
 {
+  xposition: absolute !important;
   visibility: hidden;
   width: 100vw;
   height: 100vh;
@@ -71,6 +72,15 @@ svg path, svg rect
   left: 0px;
   pointer-events: none;
 }
+
+/*
+@media screen and (max-width: 798px) {
+  #intro
+  {
+    height: calc(100vh - 70px);
+  }
+}
+*/
 
 #header
 {
@@ -89,6 +99,7 @@ svg path, svg rect
 @media screen and (max-width: 798px) {
   #header
   {
+    padding-top: 15px;
     padding-left: 15px;
     padding-right: 15px;
   }  
@@ -116,7 +127,7 @@ svg path, svg rect
 @media screen and (max-width: 798px) {
   #lead
   {
-    bottom: 0px;
+    bottom: 15px;
   }  
 }
 
@@ -232,6 +243,85 @@ h2
   width: 100%;
 }
 
+#timeline_point
+{
+  display: inline-block;
+  position: absolute;
+  width: 100%;
+  background-image: url(../img/timeline_pointer.png);
+  background-size: cover;
+  left: 2%;
+  top: 47%;
+  z-index: 103;
+  width: 1.9%;
+  height: 26%;
+  margin-left: -0.9%;
+  /*
+  width: 15px;
+  height: 15px;
+  margin-left: -7.5px;
+  */
+}
+
+#timeline_mobile
+{
+  width: 100%;
+  z-index: 102;
+  position: fixed;
+  bottom: 0px;
+  padding: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  -webkit-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  display: none;
+}
+
+#timeline_mobile img
+{
+  width: 100%;
+}
+
+#timeline_mobile_point
+{
+  display: inline-block;
+  position: absolute;
+  width: 100%;
+  background-image: url(../img/timeline_pointer.png);
+  background-size: cover;
+  left: 2%;
+  top: 45%;
+  z-index: 103;
+  width: 3.5%;
+  height: 29%;
+  margin-left: -0.9%;
+}
+
+#timeline_wrapper_desktop
+{
+  display: block;
+}
+
+#timeline_wrapper_mobile
+{
+  display: none;
+}
+
+@media screen and (max-width: 798px)
+{
+  #timeline_wrapper_desktop
+  {
+    display: none;
+  }
+
+  #timeline_wrapper_mobile
+  {
+    display: block;
+  }
+}
+
 #fixchart
 {
   position: fixed;
@@ -251,26 +341,6 @@ h2
 #fixchart img
 {
   width: 100%;
-}
-
-#timeline_point
-{
-  display: inline-block;
-  position: absolute;
-  width: 100%;
-  background-image: url(../img/timeline_pointer.png);
-  background-size: cover;
-  left: 2%;
-  top: 47%;
-  z-index: 103;
-  width: 1.9%;
-  height: 26%;
-  margin-left: -0.9%;
-  /*
-  width: 15px;
-  height: 15px;
-  margin-left: -7.5px;
-  */
 }
 
 /* Damit padding nicht Grösse des Divs beeinflusst */
