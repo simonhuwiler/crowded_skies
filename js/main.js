@@ -1,21 +1,12 @@
 /*
 
   ToDo:
-  * Texture (WMS?)
-  * Flugifarbe
+  * Timeline
   * Metazeugs
+  * Für Social zeugs
   * Minify
   * tracker!
 
-
-*/
-/*
-
-https://www.northrivergeographic.com/qgis-points-along-line
-https://threejs.org/examples/webgl_lights_hemisphere.html
-
-http://aip.engadin-airport.ch/eAIP/2017-04-27/html/eAIP/LS-ENR-3.3-en-CH.html#ENR33-RDESIG-UN850
-http://aip.engadin-airport.ch/eAIP/2017-05-25/pdf/U-ERC.pdf
 
 */
 
@@ -67,6 +58,8 @@ var lastChapter;
 var chapterEvents = [];
 var calledChapters = []
 
+
+chapterEvents['#chapter_routesonmapbox'] = chapter_routesonmapbox;
 chapterEvents['#chapter_startTHREE'] = chapter_startTHREE;
 chapterEvents['#chapter_timelaps_slow'] = chapter_timelaps_slow;
 chapterEvents['#chapter_airport_1'] = chapter_airport_1;
@@ -288,7 +281,7 @@ airways_text['y100'] = {
 
 ###############################
 */
-var renderer, scene, camera, textureLoader, sky, skyMat, ground;
+var renderer, scene, camera, textureLoader, sky, skyMat, ground, groundTile;
 var tweenGroupPoints = new TWEEN.Group();
 var tweenGroupCameras = new TWEEN.Group();
 var rendertarget, bufferScene;
@@ -302,6 +295,12 @@ var rendertarget, bufferScene;
 */
 
 $(document).ready( function() {
+
+  $("#test").on("click", function() {
+    camera.position.y = km(10);
+    camera.lookAt(new THREE.Vector3(camera.position.x, 0, camera.position.z));
+    render();
+  });
 
   $(window).on("resize", function() {
     if(camera && renderer)
@@ -375,6 +374,30 @@ $(document).ready( function() {
   });
 
   mapstart.on('load', function() {
+
+    //Add Routes
+    mapstart.addSource('overlay', {
+      "type": "image",
+      "url": "img/skybox_mapbox.png",
+      "coordinates": [
+        [5.601455, 48.730898],
+        [10.922784, 48.730898],
+        [10.922784, 45.133006],
+        [5.601455, 45.133006]
+      ]
+    });
+
+    mapstart.addLayer({
+      "id": "overlay",
+      "source": "overlay",
+      "type": "raster",
+      "paint": {
+        'raster-opacity-transition': {duration: 1000},
+        "raster-opacity": 0
+      }
+    });
+
+    //Fit bounds
     mapstart.once('moveend', disableStart);
     mapstart.fitBounds([[5.838007, 45.797035], [10.511905, 47.981684]]);
 
@@ -444,7 +467,7 @@ function prepareTHREEJS()
   //Init Scene
   scene = new THREE.Scene();
   scene.background = new THREE.Color().setHSL( 0.6, 0, 1 );
-  scene.fog = new THREE.Fog( scene.background, km(160), km(180));
+  scene.fog = new THREE.Fog( scene.background, km(160), km(180)); //xxx
 
   //Init Render
   renderer = new THREE.WebGLRenderer();
@@ -460,7 +483,7 @@ function prepareTHREEJS()
   
   //dirLight.color.setHSL( 0.1, 1, 0.55 );
   dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
-  scene.add( dirLight );
+  scene.add( dirLight ); //xxx
 
   //Add ground
   var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
@@ -478,24 +501,26 @@ function prepareTHREEJS()
   scene.add( ground );
 
   //Map Tile
-  /*
-  groundTileGeo = new THREE.PlaneBufferGeometry(km(0.25), km(0.25));
-  var groundTileMat = new THREE.MeshPhongMaterial( { color: 0xffcc00, specular: 0xffcc00 });
+  var repeat = 4096;
+  groundTileGeo = new THREE.PlaneBufferGeometry(4096, 4096);
+  //var groundTileMat = new THREE.MeshPhongMaterial( { color: 0xffcc00, specular: 0xffcc00 });
 
-  var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 18);
-  console.log(url);
-  var groundTileMat = new THREE.MeshBasicMaterial({
-    map: textureLoader.load( url )
+
+  var texture = textureLoader.load( "img/ground.jpg" );
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set( repeat, repeat );
+
+  var groundTileMat = new THREE.MeshPhongMaterial({
+    map: texture
   });
   groundTileMat.side = THREE.DoubleSide;
-
 
   groundTile = new THREE.Mesh( groundTileGeo, groundTileMat );
   groundTile.rotation.x = - Math.PI / 2;
   groundTile.position.set(xzMittelpunkt.x, groundAltitude + 0.1, xzMittelpunkt.z);
   groundTile.receiveShadow = true;
   scene.add( groundTile );
-  */
 
   //Add Skydom
   var vertexShader = document.getElementById( 'vertexShader' ).textContent;
@@ -508,11 +533,10 @@ function prepareTHREEJS()
     exponent:    { value: 0.6 }
   };
   uniforms.topColor.value = new THREE.Color(0x0c4fd7);
-
-  //scene.fog.color.copy( uniforms.bottomColor.value );
+  scene.fog.color.copy( uniforms.bottomColor.value );
 
   var skyGeo = new THREE.SphereBufferGeometry( km(300), 32, 15 );
-  skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+  skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } ); //xxx
 
   sky = new THREE.Mesh( skyGeo, skyMat );
   sky.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
@@ -798,12 +822,20 @@ function setCameraPosition(_llStart)
   //tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
 
-  /*
   groundTile.position.set(xzStartpunkt.x, groundAltitude + 0.5, xzStartpunkt.z);
+  /*
   var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 15);
   groundTile.material.map = textureLoader.load( url );
   groundTile.needsUpdate = true;
   */
+
+ var size = km(100);
+ var divisions = 50000;
+ 
+ var gridHelper = new THREE.GridHelper( size, divisions, 0x98bd71, 0x98bd71 );
+ gridHelper.position.set(xzStartpunkt.x, groundAltitude + 1, xzStartpunkt.z);
+ //scene.add( gridHelper );
+
 }
 
 
@@ -1394,6 +1426,11 @@ function disableStart()
 
 ###############################
 */
+
+function chapter_routesonmapbox()
+{
+  mapstart.setPaintProperty("overlay", "raster-opacity", 0.8);
+}
 
 function chapter_startTHREE()
 {
