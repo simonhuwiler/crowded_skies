@@ -351,7 +351,7 @@ $(document).ready( function() {
   $("#share").jsSocials({
     showLabel: false,
     showCount: false,
-    url: "https://storytelling.blick.ch/longform/2018/flugrouten/",
+    url: "https://www.blick.ch/storytelling/2018/flugrouten/",
     text: "Am Schweizer Himmel: Ein dichtes Netz von Flugrouten. Wie diese Himmels-Autobahnen organisiert sind, erzählen wir Ihnen aus der Perspektive Ihres Wohnortes.",
                                
     shares: [
