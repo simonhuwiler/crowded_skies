@@ -2,8 +2,7 @@
 
   ToDo:
   * Texture (WMS?)
-  * Buttons hintergrundfarbe
-  * Social buttons (albanien)
+  * Flugifarbe
   * Metazeugs
   * Minify
   * tracker!
@@ -304,10 +303,6 @@ var rendertarget, bufferScene;
 
 $(document).ready( function() {
 
-  $("#test").on("click", function() {
-
-  });
-
   $(window).on("resize", function() {
     if(camera && renderer)
     {
@@ -351,6 +346,19 @@ $(document).ready( function() {
 
   $("#buttonReload").on("click", function() {
     location.reload();
+  });
+
+  //Social Buttons
+  $("#share").jsSocials({
+    showLabel: false,
+    showCount: false,
+    url: "https://storytelling.blick.ch/longform/2018/flugrouten/",
+    text: "Am Schweizer Himmel: Ein dichtes Netz von Flugrouten. Wie diese Himmels-Autobahnen organisiert sind, erzählen wir Ihnen aus der Perspektive Ihres Wohnortes.",
+                               
+    shares: [
+        { share: "twitter", via: "blick_visual", hashtags: "flugrouten,skyguide,dataviz" },
+        "facebook"
+    ]
   });
 
   //PrepareMapbox Start
@@ -469,6 +477,26 @@ function prepareTHREEJS()
   ground.receiveShadow = true;
   scene.add( ground );
 
+  //Map Tile
+  /*
+  groundTileGeo = new THREE.PlaneBufferGeometry(km(0.25), km(0.25));
+  var groundTileMat = new THREE.MeshPhongMaterial( { color: 0xffcc00, specular: 0xffcc00 });
+
+  var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 18);
+  console.log(url);
+  var groundTileMat = new THREE.MeshBasicMaterial({
+    map: textureLoader.load( url )
+  });
+  groundTileMat.side = THREE.DoubleSide;
+
+
+  groundTile = new THREE.Mesh( groundTileGeo, groundTileMat );
+  groundTile.rotation.x = - Math.PI / 2;
+  groundTile.position.set(xzMittelpunkt.x, groundAltitude + 0.1, xzMittelpunkt.z);
+  groundTile.receiveShadow = true;
+  scene.add( groundTile );
+  */
+
   //Add Skydom
   var vertexShader = document.getElementById( 'vertexShader' ).textContent;
   var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
@@ -535,11 +563,13 @@ function prepareTHREEJS()
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
 
   //Add Startpoint-Cube (Remove me!)
+  /*
   tmpGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
   tmpMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000} );
   tmpMesh = new THREE.Mesh( tmpGeometry, tmpMaterial );
   tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   scene.add(tmpMesh);
+  */
 }
 
 function rotateCamera(_x, _y, _z, _duration)
@@ -765,8 +795,15 @@ function setCameraPosition(_llStart)
 {
   xzStartpunkt = latLon2XY(llNullPoint, _llStart);
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
-  tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
+  //tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
   ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
+
+  /*
+  groundTile.position.set(xzStartpunkt.x, groundAltitude + 0.5, xzStartpunkt.z);
+  var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 15);
+  groundTile.material.map = textureLoader.load( url );
+  groundTile.needsUpdate = true;
+  */
 }
 
 
@@ -1649,3 +1686,22 @@ function latLon2XY(_nullPoint, _point)
 }
 
 
+
+/**** LATLONG TO XYZ ****/
+/*
+Number.prototype.toRad = function() {
+  return this * Math.PI / 180;
+}
+
+function getTileURL(lat, lon, zoom) {
+  var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
+  var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
+  //return {x: xtile, y: ytile, z: zoom};
+  //return "https://api.mapbox.com/styles/v1/blick-storytelling/cjg6dbhus2vf32sp53s358gud/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg"
+  //return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  //return "https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/256/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  //return "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  //return "https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+  return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
+}
+*/
