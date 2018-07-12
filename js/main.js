@@ -58,7 +58,6 @@ var lastChapter;
 var chapterEvents = [];
 var calledChapters = []
 
-
 chapterEvents['#chapter_routesonmapbox'] = chapter_routesonmapbox;
 chapterEvents['#chapter_startTHREE'] = chapter_startTHREE;
 chapterEvents['#chapter_timelaps_slow'] = chapter_timelaps_slow;
@@ -70,7 +69,6 @@ chapterEvents['#chapter_nearest_airway_2'] = chapter_nearest_airway_2;
 chapterEvents['#chapter_after_airways'] = chapter_after_airways;
 chapterEvents['#chapter_show_lines'] = chapter_show_lines;
 chapterEvents['#chapter_load_heatmap'] = chapter_load_heatmap;
-
 
 var chapterScrolltop = [];
 
