@@ -1612,12 +1612,12 @@ function loadTerrain(llPos)
     tokenMapbox: mapboxgl.accessToken
   });
 
-  const radius = 3;
+  const radius = 5;
   //https://github.com/w3reality/three-geo
 
   var terrain = null;
 
-  tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
+  tgeo.getTerrain([llPos.lat, llPos.lon], radius, 11, {
     onRgbDem: meshes => {
 
         meshes.forEach(mesh => {
@@ -1625,7 +1625,9 @@ function loadTerrain(llPos)
           
           //Calc Scale Factor
           var box = new THREE.Box3().setFromObject( mesh )
-          const scaleFactor = radius * 1000 / box.getSize().x
+          var target = new THREE.Vector3();
+          box.getSize(target)
+          const scaleFactor = radius * 1000 / target.x
           mesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
           
           //Rotate Mesh
