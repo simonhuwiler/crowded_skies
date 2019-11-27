@@ -4,6 +4,8 @@ var mapboxgl = require('mapbox-gl/dist/mapbox-gl.js');
 var THREE = require('three');
 const turf = require("@turf/turf")
 import TWEEN from '@tweenjs/tween.js';
+var ThreeGeo = require('three-geo/dist/three-geo.min.js')
+
 require('./docReady.js');
 
 //Import Data or Helpers
@@ -380,12 +382,14 @@ docReady(function() {
   });
 
   mapstart.on("dragstart", function() {
-    $("#header, #lead").fadeTo(200, 0);
+    document.getElementById('header').style.opacity = 0.2;
+    document.getElementById('lead').style.opacity = 0.2;
     disableStart();
   });
 
   mapstart.on("dragend", function() {
-    $("#header, #lead").fadeTo(200, 1);
+    document.getElementById('header').style.opacity = 1;
+    document.getElementById('lead').style.opacity = 1;
     pointInShape()
   });
   mapstart.on("zoomstart", function() {
@@ -420,13 +424,8 @@ docReady(function() {
 
   loaderAddCount();
   fetch('./data.csv')
-  .then(response => response.text())
-  .then(loadData);
-  // $.ajax({
-  //   type: "GET",
-  //   url: "data/data.csv",
-  //   success: loadData
-  // });
+    .then(response => response.text())
+    .then(loadData);
 
   loaderRemoveCount();
 
@@ -580,10 +579,10 @@ function userPositionSelected()
   //Eigener Thread, damit es angezeigt wird
   setTimeout(function() {
     //Change UI
-    $("#target").hide();
-    $("#intro").hide();
+    document.getElementById('target').display = 'none';
+    document.getElementById('intro').display = 'none';
 
-    $("#wait_after_locate").show();
+    document.getElementById('wait_after_locate').display = 'block';
   }, 0);
 
   //Remove Interactivity from Mapbox
@@ -617,44 +616,45 @@ function userPositionSelected()
   loadTerrain(llStartpunkt);
 
   //Geocode Position
-  var url = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + llStartpunkt.lon + "," + llStartpunkt.lat + ".json?access_token=" + mapboxgl.accessToken;
-  $.get(url, {country: 'ch', types: 'place'},function(data){
-    if(data.features.length > 0)
-    {
-      //Data retrieved
-      prepareHTMLGrid(data.features[0].text);
-    }
-    else
-    {
-      //Ups, no data. Take a neutral name
-      prepareHTMLGrid();
-    }
-  })
-  .fail(function() {
-    //Geocoding failed
-    console.log("Geocoding failed");
-    prepareHTMLGrid();
-  });
+  var url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${llStartpunkt.lon},${llStartpunkt.lat}.json?access_token=${mapboxgl.accessToken}&country=ch&types=place`;
 
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      if(data.features.length > 0)
+      {
+        //Data retrieved
+        prepareHTMLGrid(data.features[0].text);
+      }
+      else
+      {
+        //Ups, no data. Take a neutral name
+        prepareHTMLGrid();
+      }
+    });
+  // .fail(function() {
+  //   //Geocoding failed
+  //   console.log("Geocoding failed");
+  //   prepareHTMLGrid();
+  // });
+  
   //Calculate nearest Airports
   nearest_airports = getNearestAirport(llStartpunkt, 2);
 
   //Prepare Airport 1
-  var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name + " span");
-  ap1.each(function(e) {
-    $(this).text($(this).text().replace(new RegExp("{airport_1_distance}", 'g'), Math.round(nearest_airports[0].properties.distanceToPoint)));
-  });
-  $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name).show();
-  $(".airport_destination_1 .chapter_content .airport_" + nearest_airports[0].properties.name).show();
+  var ap1 = document.querySelectorAll(`#chapter_airport_1 .chapter_content .airport_${nearest_airports[0].properties.name} span`);
+  ap1.forEach(e => e.innerHTML = e.innerHTML.replace(new RegExp("{airport_1_distance}", 'g'), Math.round(nearest_airports[0].properties.distanceToPoint)));
+
+  document.querySelectorAll(`#chapter_airport_1 .chapter_content .airport_${nearest_airports[0].properties.name}`).forEach(e => e.style.display = 'inline');
+  document.querySelectorAll(`.airport_destination_1 .chapter_content .airport_${nearest_airports[0].properties.name}`).forEach(e => e.style.display = 'inline');
   
 
   //Prepare Airport 2
-  var ap1 = $("#chapter_airport_2 .chapter_content .airport_" + nearest_airports[1].properties.name + " span");
-  ap1.each(function(e) {
-    $(this).text($(this).text().replace(new RegExp("{airport_2_distance}", 'g'), Math.round(nearest_airports[1].properties.distanceToPoint)));
-  });
-  $("#chapter_airport_2 .chapter_content .airport_" + nearest_airports[1].properties.name).show();
-  $(".airport_destination_2 .chapter_content .airport_" + nearest_airports[1].properties.name).show();
+  var ap1 = document.querySelectorAll(`#chapter_airport_2 .chapter_content .airport_${nearest_airports[1].properties.name} span`);
+  ap1.forEach(e => e.innerHTML = e.innerHTML.replace(new RegExp("{airport_2_distance}", 'g'), Math.round(nearest_airports[1].properties.distanceToPoint)));
+  
+  document.querySelectorAll(`#chapter_airport_2 .chapter_content .airport_${nearest_airports[1].properties.name}`).forEach(e => e.style.display = 'inline');
+  document.querySelectorAll(`.airport_destination_2 .chapter_content .airport_${nearest_airports[1].properties.name}`).forEach(e => e.style.display = 'inline');
 
   //Calculate nearest Airways
   nearest_airways = getNearestLines(llStartpunkt, 3);
@@ -668,16 +668,17 @@ function userPositionSelected()
 function fillAirwayDiv(_nr)
 {
   //Set Intro Text
-  var intro = $(".airways_intro");
-  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_name}", 'g'), nearest_airways[_nr].properties.name.toUpperCase()));
-  intro.html(intro.html().replace(new RegExp("{airway_" + _nr + "_distance}", 'g'), Math.round(nearest_airways[_nr].properties.distanceToPoint)));
-  $(".airways_intro #airway_short_" + _nr).addClass("color_" + nearest_airways[_nr].properties.name);
+  var intro = document.querySelector(".airways_intro");
+  intro.innerHTML = intro.innerHTML.replace(new RegExp(`{airway_${_nr}_name}`, 'g'), nearest_airways[_nr].properties.name.toUpperCase());
+  intro.innerHTML = intro.innerHTML.replace(new RegExp(`{airway_${_nr}_distance}`, 'g'), Math.round(nearest_airways[_nr].properties.distanceToPoint));
+
+  document.querySelector(`.airways_intro #airway_short_${_nr}`).classList.add(`color_${nearest_airways[_nr].properties.name}`);
 
   aw = airways_text[nearest_airways[_nr].properties.name];
-  $(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").text(aw.title);
-  $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").addClass("color_" + nearest_airways[_nr].properties.name);
-  $(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").text(nearest_airways[_nr].properties.name.toUpperCase());
-  $(".chapter_airways_" + _nr + " .chapter_content .route_text").html(aw.text);
+  document.querySelector(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").innerHTML = aw.title;
+  document.querySelector(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").classList.add("color_" + nearest_airways[_nr].properties.name);
+  document.querySelector(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").innerHTML = nearest_airways[_nr].properties.name.toUpperCase();
+  document.querySelector(".chapter_airways_" + _nr + " .chapter_content .route_text").innerHTML = aw.text;
 }
 
 function prepareHTMLGrid(_placeName)
@@ -685,59 +686,58 @@ function prepareHTMLGrid(_placeName)
   if(_placeName != "" && _placeName != undefined)
   {
     //Show labels
-    $(".has_place").show();
-    $(".has_no_place").hide();
+    document.document.querySelectorAll('.has_place').forEach(e => e.style.display = 'inline');
+    document.document.querySelectorAll('.has_no_place').forEach(e => e.style.display = 'none');
 
     //Replace by placeName
-    $(".has_place").each(function(e) {
-      $(this).text($(this).text().replace(new RegExp("{place_name}", 'g'), _placeName));
-    });
+    document.querySelectorAll(".has_place").forEach(e => e.innerHTML = e.innerHTML.replace(new RegExp("{place_name}", 'g'), _placeName));
   }
   else
   {
-    $(".has_place").hide();
-    $(".has_no_place").show();
+
+    document.document.querySelectorAll('.has_place').forEach(e => e.style.display = 'none');
+    document.document.querySelectorAll('.has_no_place').forEach(e => e.style.display = 'inline');
   }
-  $("#wait_after_locate").hide();
-  $("#content").fadeIn(400, function() {
-    //Register Scrollevents after FadeIn
 
-    //Calculate all scrolltops. Bether than calculate each time
-    calculateScrollTop();
+  document.getElementById('wait_after_locate').style.display = 'none';
+  document.getElementById('content').style.display = 'inline';
+  //Register Scrollevents
 
-    //Register Event
-    $(document).scroll(function() {
-      scrollTop = $(document).scrollTop();
-      for(k in chapterScrolltop)
+  //Calculate all scrolltops. Bether than calculate each time
+  calculateScrollTop();
+
+  //Register Event
+  $(document).scroll(function() {
+    scrollTop = $(document).scrollTop();
+    for(k in chapterScrolltop)
+    {
+      if(scrollTop >= chapterScrolltop[k])
       {
-        if(scrollTop >= chapterScrolltop[k])
+        if(lastChapter != k)
         {
-          if(lastChapter != k)
+          //Run event
+          lastChapter = k;
+
+          //Check, if not already fired
+          if(calledChapters.indexOf(k) == -1)
           {
-            //Run event
-            lastChapter = k;
-
-            //Check, if not already fired
-            if(calledChapters.indexOf(k) == -1)
-            {
-              chapterEvents[k]();
-              calledChapters.push(k);
-            }
+            chapterEvents[k]();
+            calledChapters.push(k);
           }
-          break;
         }
+        break;
       }
-    });
-
-    //Show scroller
-    $("#scroller").show();
+    }
   });
+
+  //Show scroller
+  document.getElementById('scroller').style.display = 'inline';
 }
 
 function calculateScrollTop()
 {
   //Calculate Scrolloffset
-  var scrollOffset = $(window).height() + 200;
+  var scrollOffset = window.innerHeight + 200;
 
   //Put keys in an extra array and reverse it
   var keys = [];
