@@ -6,6 +6,8 @@ var THREE = require('three');
 const turf = require("@turf/turf")
 import TWEEN from '@tweenjs/tween.js';
 var ThreeGeo = require('three-geo/dist/three-geo.min.js')
+// var ThreeGeo = require('../lib/three-geo.min.js')
+
 
 require('./docReady.js');
 
@@ -14,7 +16,6 @@ var airways_lines = require('./data/airways.js')
 
 // Import CSS
 require('./css/main.css')
-
 
 /*
 ###############################
@@ -1496,6 +1497,7 @@ function loadTerrain(llPos)
     console.log(camera.position)
     console.log(terrain.position)
     terrain.needsUpdate = true;
+    camera.position.set(terrain.position.x + 100, terrain.position.y+ 100, terrain.position.z+100)
     camera.lookAt(terrain)
     render();
   })
@@ -1531,6 +1533,8 @@ function loadTerrain(llPos)
         render();        
     },
     onSatelliteMat: mesh => {
+
+      mesh.material.wireframe = true;
 
       render();
       console.log("mesh")
