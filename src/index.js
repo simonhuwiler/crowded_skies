@@ -2,6 +2,7 @@
 // Import modules
 var mapboxgl = require('mapbox-gl/dist/mapbox-gl.js');
 var THREE = require('three');
+// var THREE = require('../lib/three.min.js');
 const turf = require("@turf/turf")
 import TWEEN from '@tweenjs/tween.js';
 var ThreeGeo = require('three-geo/dist/three-geo.min.js')
@@ -47,10 +48,11 @@ var lastTrack;
 var trackGroup;
 var trackLineMaterial;
 var xzStartpunkt;
+var xzMittelpunkt;
+var skyOverlayPlane;
 
 //Mapbox Variables
 var mapstart, mapend;
-var geocoder;
 
 //HTML-Varbiables
 var lastChapter;
@@ -308,7 +310,7 @@ docReady(function() {
 
     //Set Position
     btn_new.style.left =`${btn_old.offset().left}px`;
-    btn_new.style.top = btn_old.offset().top - $(window).scrollTop() + 'px';
+    btn_new.style.top = btn_old.offset().top - window.scrollTop + 'px';
     btn_new.style.display = 'inline';
 
     //Hide old
@@ -433,7 +435,7 @@ docReady(function() {
 
 function prepareTHREEJS()
 {
-  var xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
+  xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
 
   textureLoader = new THREE.TextureLoader();
@@ -487,7 +489,7 @@ function prepareTHREEJS()
   var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
   var skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
   skyOverlayMaterial.transparent = true;
-  var skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
+  skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
   skyOverlayPlane.material.depthTest = true;
   skyOverlayPlane.material.side = THREE.DoubleSide;
   skyOverlayPlane.position.set(xzMittelpunkt.x, km(30), xzMittelpunkt.z);
@@ -579,10 +581,10 @@ function userPositionSelected()
   //Eigener Thread, damit es angezeigt wird
   setTimeout(function() {
     //Change UI
-    document.getElementById('target').display = 'none';
-    document.getElementById('intro').display = 'none';
+    document.getElementById('target').style.display = 'none';
+    document.getElementById('intro').style.display = 'none';
 
-    document.getElementById('wait_after_locate').display = 'block';
+    document.getElementById('wait_after_locate').style.display = 'block';
   }, 0);
 
   //Remove Interactivity from Mapbox
@@ -674,7 +676,7 @@ function fillAirwayDiv(_nr)
 
   document.querySelector(`.airways_intro #airway_short_${_nr}`).classList.add(`color_${nearest_airways[_nr].properties.name}`);
 
-  aw = airways_text[nearest_airways[_nr].properties.name];
+  var aw = airways_text[nearest_airways[_nr].properties.name];
   document.querySelector(".chapter_airways_" + _nr + " .chapter_content h2 .route_title").innerHTML = aw.title;
   document.querySelector(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").classList.add("color_" + nearest_airways[_nr].properties.name);
   document.querySelector(".chapter_airways_" + _nr + " .chapter_content h2 .label_route").innerHTML = nearest_airways[_nr].properties.name.toUpperCase();
@@ -686,8 +688,8 @@ function prepareHTMLGrid(_placeName)
   if(_placeName != "" && _placeName != undefined)
   {
     //Show labels
-    document.document.querySelectorAll('.has_place').forEach(e => e.style.display = 'inline');
-    document.document.querySelectorAll('.has_no_place').forEach(e => e.style.display = 'none');
+    document.querySelectorAll('.has_place').forEach(e => e.style.display = 'block');
+    document.querySelectorAll('.has_no_place').forEach(e => e.style.display = 'none');
 
     //Replace by placeName
     document.querySelectorAll(".has_place").forEach(e => e.innerHTML = e.innerHTML.replace(new RegExp("{place_name}", 'g'), _placeName));
@@ -695,21 +697,21 @@ function prepareHTMLGrid(_placeName)
   else
   {
 
-    document.document.querySelectorAll('.has_place').forEach(e => e.style.display = 'none');
-    document.document.querySelectorAll('.has_no_place').forEach(e => e.style.display = 'inline');
+    document.querySelectorAll('.has_place').forEach(e => e.style.display = 'none');
+    document.querySelectorAll('.has_no_place').forEach(e => e.style.display = 'block');
   }
 
   document.getElementById('wait_after_locate').style.display = 'none';
-  document.getElementById('content').style.display = 'inline';
+  document.getElementById('content').style.display = 'block';
   //Register Scrollevents
 
   //Calculate all scrolltops. Bether than calculate each time
   calculateScrollTop();
 
   //Register Event
-  $(document).scroll(function() {
-    scrollTop = $(document).scrollTop();
-    for(k in chapterScrolltop)
+  window.addEventListener("scroll", function() {
+    var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+    for(var k in chapterScrolltop)
     {
       if(scrollTop >= chapterScrolltop[k])
       {
@@ -749,17 +751,10 @@ function calculateScrollTop()
   for (var k in keys)
   {
     var keyname = keys[k];
-    var offset = $(keyname).offset().top - scrollOffset;
+    //Check
+    var offset = document.querySelector(keyname).offsetTop - scrollOffset;
     chapterScrolltop[keyname] = offset;
   }
-}
-
-function addFixChart(_url)
-{
-  var fixchart = $("#fixchart");
-  fixchart.empty();
-  fixchart.append($("<img src='" + _url + "'>"));
-  fixchart.fadeIn(1000);
 }
 
 function setCameraPosition(_llStart)
@@ -770,7 +765,6 @@ function setCameraPosition(_llStart)
   //ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
   //groundTile.position.set(xzStartpunkt.x, groundAltitude + 0.5, xzStartpunkt.z);
 }
-
 
 
 /*
@@ -884,7 +878,6 @@ function getNearestAirport(_source, _max)
   }
   return results;
 }
-
 
 function loadData(_data)
 {
@@ -1021,25 +1014,24 @@ function createTweensAndStart(_serie)
 
   //###Set Startpoint of each Sprite
 
-  timestampAsString = ('0' + _serie.getHours()).substr(-2) + ":" + ('0' + _serie.getMinutes()).substr(-2)  + ":00";
-  //console.log(timestampAsString);
+  var timestampAsString = ('0' + _serie.getHours()).substr(-2) + ":" + ('0' + _serie.getMinutes()).substr(-2)  + ":00";
 
   //calculate next Timestamp
   var dateNext = new Date(_serie.getTime());
   dateNext.setMinutes(dateNext.getMinutes() + timeSerieDeltaMin);
-  timestampNextAsString = ('0' + dateNext.getHours()).substr(-2) + ":" + ('0' + dateNext.getMinutes()).substr(-2)  + ":00";
+  var timestampNextAsString = ('0' + dateNext.getHours()).substr(-2) + ":" + ('0' + dateNext.getMinutes()).substr(-2)  + ":00";
 
   //Load timestamp with all points in it
-  timestamp = data_series[timestampAsString];
-  timestampNext = data_series[timestampNextAsString];
+  var timestamp = data_series[timestampAsString];
+  var timestampNext = data_series[timestampNextAsString];
 
   /*Set Position of Timeline
   00:00 = 2%
   24:00 = 98%
   */
   var minAbsolute = _serie.getHours() * 60 + _serie.getMinutes();
-  $("#timeline_point").css("left", ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%"); 
-  $("#timeline_mobile_point").css("left", ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%"); 
+  document.getElementById('timeline_point').style.left = ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%";
+  document.getElementById("timeline_mobile_point").style.left = ((98 - 2) / (24 * 60) * minAbsolute ) + 2 + "%";
 
   //Sunrise/Sunset
   var colorRatio = 1 / 120;
@@ -1063,12 +1055,12 @@ function createTweensAndStart(_serie)
   if(timestampNext)
   {
     //There are more Timestamps!
-    for(serie in timestamp)
+    for(var serie in timestamp)
     {
       serie = timestamp[serie];
       //Look in nextserie. If icao24 not available, hide
       var foundNext = false;
-      for(serieNext in timestampNext)
+      for(var serieNext in timestampNext)
       {
         serieNext = timestampNext[serieNext];
         if(serie.icao24.icao24 == serieNext.icao24.icao24)
@@ -1212,12 +1204,16 @@ function chapter_routesonmapbox()
 
 function chapter_startTHREE()
 {
-  $("#scroller").fadeOut();
+  document.getElementById('scroller').style.display = 'none';
+  //ToDo
+  // $("#scroller").fadeOut();
 
   //Register event after flying
   mapstart.once('moveend', function() {
     //Animation ended
-    $("#mapstart").fadeOut();
+    document.getElementById('mapstart').style.display = 'none';
+    //Todo
+    // $("#mapstart").fadeOut();
     render();
     if(bearing == 0)
     {
@@ -1266,8 +1262,11 @@ function chapter_timelaps_slow()
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
   createTweensAndStart(lastTrack);
-  $("#timeline").fadeIn();
-  $("#timeline_mobile").fadeIn();
+  document.getElementById('timeline').style.display = 'block';
+  document.getElementById('timeline_mobile').style.display = 'block';
+  //ToDo
+  // $("#timeline").fadeIn();
+  // $("#timeline_mobile").fadeIn();
 }
 
 function chapter_show_lines_animate_opacity()
@@ -1304,23 +1303,11 @@ function chapter_airport_internal(_nr)
 {
   //stopTweenTracks();
   var llAirport = new LatLon(nearest_airports[_nr].geometry.coordinates[1], nearest_airports[_nr].geometry.coordinates[0]);
-  xzAirport = latLon2XY(llNullPoint, llAirport);
+  var xzAirport = latLon2XY(llNullPoint, llAirport);
 
   var newRotation = getNewCameraRotation(new THREE.Vector3(xzAirport.x, groundAltitude + 2, xzAirport.z));
 
   rotateCameraPauseTween(camera.rotation.x, newRotation.y, camera.rotation.z, 2000);
-  /*
-  new TWEEN.Tween(camera.rotation, tweenGroupCameras)
-    .to({y: newRotation.y}, 2000)
-    .easing(TWEEN.Easing.Cubic.Out)
-    .onComplete(function() {
-      console.log("Resume Tween");
-      resumeTweenTracks();
-    })
-    .start();
-
-  animateTween();
-  */
 }
 
 function chapter_airport_1()
@@ -1335,7 +1322,7 @@ function chapter_airport_2()
 
 function moveCameraToAirway(_nr)
 {
-  xzAirwayPoint = latLon2XY(llNullPoint, new LatLon(nearest_airways[_nr].geometry.coordinates[1], nearest_airways[_nr].geometry.coordinates[0]));
+  var xzAirwayPoint = latLon2XY(llNullPoint, new LatLon(nearest_airways[_nr].geometry.coordinates[1], nearest_airways[_nr].geometry.coordinates[0]));
   var newRotation = getNewCameraRotation(new THREE.Vector3(xzAirwayPoint.x, skyOverlayPlane.position.y, xzAirwayPoint.z));
   rotateCameraPauseTween(newRotation.x, newRotation.y, newRotation.z, 2000);
 }
@@ -1365,8 +1352,11 @@ function chapter_after_airways()
 function chapter_load_heatmap()
 {
   stopTweenTracks();
-  $("#timeline").fadeOut();
-  $("#timeline_mobile").fadeOut();
+  document.getElementById('timeline').style.display = 'none';
+  document.getElementById('timeline_mobile').style.display = 'none';
+  //ToDo
+  // $("#timeline").fadeOut();
+  // $("#timeline_mobile").fadeOut();
 
   var newRotation = getNewCameraRotation(new THREE.Vector3(camera.position.x, groundAltitude - 50, camera.position.z - 10));
   new TWEEN.Tween(camera.rotation, tweenGroupCameras)
@@ -1375,8 +1365,10 @@ function chapter_load_heatmap()
     .onComplete(function() {
       //Enable Camera     
 
-      $("#threejs").fadeOut();
-      $("#mapend").css("visibility", "visible");
+      document.getElementById('threejs').style.display = 'none';
+      //ToDo
+      // $("#threejs").fadeOut();
+      document.getElementById('mapend').style.visibility = 'visible';
     
       //Enable Interactivity from Mapbox
       mapend.boxZoom.enable();
@@ -1422,12 +1414,6 @@ function getBoundingBoxOfObject(_object)
   var box = new THREE.Box3().setFromObject( _object );
   box.getSize(size3);
   return size3;
-}
-
-function getHalfHeightOfObject(_object)
-{
-  var size3 = getBoundingBoxOfObject(_object);
-  return size3.y / 2;
 }
 
 function LatLon(lat, lon) {
@@ -1484,18 +1470,6 @@ function bearingTo(source, point) {
 
 function latLon2XY(_nullPoint, _point)
 {
-  //vGoogle
-  /*
-  var point1 = new google.maps.LatLng(_nullPoint.lat, _nullPoint.lon);
-  var point2 = new google.maps.LatLng(_point.lat, _point.lon);
-  var heading = google.maps.geometry.spherical.computeHeading(point1,point2);
-  //console.log("google maps heading", heading);
-
-  var gDistance = google.maps.geometry.spherical.computeDistanceBetween(point1,point2);
-  //console.log("google maps distance", gDistance);
-  //Needs: <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnNRaRyTgYY5rP_RIvtz8W09p46Qx-Dzw&libraries=geometry"></script>
-  */
-
   let distanceX = distance(_nullPoint, new LatLon(_nullPoint.lat, _point.lon));
   let distanceZ = distance(_nullPoint, new LatLon(_point.lat, _nullPoint.lon));
 
@@ -1504,11 +1478,13 @@ function latLon2XY(_nullPoint, _point)
 
 
 /********************* TERRAIN *****/
-
+var terrain;
 function loadTerrain(llPos)
 {
+  console.log("TERRAIN")
   var xzPos = latLon2XY(llNullPoint, llPos);
 
+  console.log(llPos, xzPos)
   const tgeo = new ThreeGeo({
     tokenMapbox: mapboxgl.accessToken
   });
@@ -1516,14 +1492,21 @@ function loadTerrain(llPos)
   const radius = 5;
   //https://github.com/w3reality/three-geo
 
-  var terrain = null;
+  document.getElementById('test').addEventListener('click', () => {
+    console.log(camera.position)
+    console.log(terrain.position)
+    terrain.needsUpdate = true;
+    camera.lookAt(terrain)
+    render();
+  })
+  var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+  scene.add( light );
 
-  tgeo.getTerrain([llPos.lat, llPos.lon], radius, 11, {
+
+  tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
     onRgbDem: meshes => {
-
         meshes.forEach(mesh => {
           terrain = mesh;
-          
           //Calc Scale Factor
           var box = new THREE.Box3().setFromObject( mesh )
           var target = new THREE.Vector3();
@@ -1539,7 +1522,8 @@ function loadTerrain(llPos)
 
           //Add Mesh
           scene.add(mesh)
-          render();
+          
+          mesh.updateMatrixWorld();
           
         });
 
@@ -1549,10 +1533,9 @@ function loadTerrain(llPos)
     onSatelliteMat: mesh => {
 
       render();
+      console.log("mesh")
       //Set Camera by Raycaster
-
       var raycaster = new THREE.Raycaster();
-      terrain.updateMatrixWorld();
       mesh.updateMatrixWorld();
       raycaster.set(new THREE.Vector3(xzPos.x, 5000, xzPos.z), new THREE.Vector3(0, -1, 0));
       var intersects = raycaster.intersectObjects(scene.children, true);
@@ -1560,6 +1543,7 @@ function loadTerrain(llPos)
       if(intersects.length > 0)
       {
         camera.position.y = intersects[0].point.y + 2;
+        console.log(intersects[0].point.y)
       }
       else
       {
