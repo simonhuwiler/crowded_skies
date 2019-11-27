@@ -1006,21 +1006,14 @@ function loaderRemoveCount()
   }
   else if(loaderCounter == 0)
   {
-    $("#maploader").fadeOut(200);
-    $("#target").show();
+    //Todo
+    //$("#maploader").fadeOut(200);
+    document.getElementById('maploader').style.display = 'none'
+    document.getElementById('target').style.display = 'block';
   }
 }
 
-var clock;
 var tweenArray = [];
-
-function animateLines()
-{
-  lastTrack.setHours(6);
-  lastTrack.setMinutes(0);
-  lastTrack.setSeconds(0);
-  createTweensAndStart(lastTrack);
-}
 
 function createTweensAndStart(_serie)
 {
@@ -1200,8 +1193,8 @@ function disableStart()
 {
   var setPosition = document.getElementById('setPosition');
   setPosition.classList.add("btn_n_inactive");
-  setPosition.classList.remove.removeClass("btn_n");
-  setPosition.removeEventListener("click");
+  setPosition.classList.remove("btn_n");
+  setPosition.removeEventListener("click", userPositionSelected);
 }
 
 /*
