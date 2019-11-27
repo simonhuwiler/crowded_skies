@@ -39,7 +39,6 @@ var llMittelpunkt = new LatLon(46.943366, 8.311583);
 //var llGenf = new LatLon(46.202770, 6.148037);
 
 var llStartpunkt = llMittelpunkt;
-// var llStartpunkt = llLuzern;
 var controls;
 var lastTrack;
 var trackGroup;
@@ -456,9 +455,6 @@ function prepareTHREEJS()
   xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
 
-  //XXX ToDo Remove
-  // xzLuzern = latLon2XY(llNullPoint, llLuzern);
-
   textureLoader = new THREE.TextureLoader();
 
   //Init Scene
@@ -638,7 +634,6 @@ function animateTween()
 
 function userPositionSelected()
 {
-  console.log("ru")
   
   //Eigener Thread, damit es angezeigt wird
   setTimeout(function() {
@@ -663,6 +658,9 @@ function userPositionSelected()
   setCameraPosition(llStartpunkt);
   //camera.rotation.x = 0.9;
   render();
+
+  //Get Elevation Map
+  loadTerrain(llStartpunkt);
 
   //Geocode Position
   var url = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + llStartpunkt.lon + "," + llStartpunkt.lat + ".json?access_token=" + mapboxgl.accessToken;
@@ -954,6 +952,7 @@ function getNearestAirport(_source, _max)
 
 function loadData(_data)
 {
+
   //Parse CSV
   var allTextLines = _data.split(/\r\n|\n/);
   var headers = allTextLines[0].split(',');
@@ -1022,11 +1021,10 @@ function loadData(_data)
   renderTracks();
   loaderRemoveCount();
 
-  //ToDo XXX Remove
-  loaderRemoveCount();
-  userPositionSelected();
-  $("#mapstart").hide();
-  loadTerrain();
+  // //ToDo XXX Remove
+  // loaderRemoveCount();
+  // userPositionSelected();
+  // $("#mapstart").hide();
 }
 
 function renderTracks()
@@ -1627,33 +1625,23 @@ function getTileURL(lat, lon, zoom) {
 
 
 /********************* TERRAIN *****/
-function assembleUrl(img, coords){
-
-  var tileset = img ? 'mapbox.streets-satellite' : 'mapbox.terrain-rgb';//
-  var res = img ? '@2x.png' :'@2x.pngraw';
-
-  //domain sharding
-  var serverIndex = 2*(coords[1]%2)+coords[2]%2
-  var server = ['a','b','c','d'][serverIndex]
-  //return 'sample.png'
-  return 'https://'+server+'.tiles.mapbox.com/v4/'+tileset+'/'+slashify(coords)+res+'?access_token=pk.eyJ1IjoicGV0ZXJxbGl1IiwiYSI6ImNqdHJqdG92OTBkNTg0M3BsNDY0d3NudWcifQ.0z4ov_viFE-yBMSijQpOhQ'
-}
 
 function loadTerrain(llPos)
 {
-  llPos = llStartpunkt;
   var xzPos = latLon2XY(llNullPoint, llPos);
 
   const tgeo = new ThreeGeo({
     tokenMapbox: mapboxgl.accessToken
   });
-  console.log(llPos, xzPos)
 
   const radius = 2;
 //https://github.com/w3reality/three-geo
-tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
+
+var terrain = null;
+tgeo.getTerrain([llPos.lat, llPos.lon], radius, 11, {
   onRgbDem: meshes => {                     // your implementation when the terrain's geometry is obtained
       meshes.forEach(mesh => {
+        terrain = mesh;
         
         //Calc Scale Factor
         var box = new THREE.Box3().setFromObject( mesh )
@@ -1661,30 +1649,22 @@ tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
         mesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
         
         //Rotate Mesh
-        mesh.rotation.x = Math.PI / 2;
+        mesh.rotation.x = Math.PI / -2;
         
         //Set Position
         // mesh.position.set(xzPos.x + box.getSize().x / 2, groundAltitude - 2, xzPos.z + box.getSize().z / 2);
         mesh.position.set(xzPos.x, groundAltitude - 2, xzPos.z);
 
+
+        // mesh.DoubleSide = true;
+        // mesh.doubleSide = true;
+        // mesh.updateMatrixWorld() 
         //Add Mesh
         scene.add(mesh)
         render();
         //Find Intersect
-        var raycaster = new THREE.Raycaster();
-        raycaster.set(new THREE.Vector3(xzPos.x, 0, xzPos.z), new THREE.Vector3(xzPos.x, 80000, xzPos.z));
-        // raycaster.set(new THREE.Vector3(xzPos.x, 8000, xzPos.z), new THREE.Vector3(xzPos.x, 0, xzPos.z));
-        var intersects = raycaster.intersectObject(mesh);
-        if(intersects.length > 0)
-        {
-          camera.position.y = intersects[0].point.y + mesh.position.y + 2;
-          console.log(camera.position.y)
-        }
-        else
-        {
-          console.log("Could not calculate camera y position. No intersecting objects!")
-        }
-        console.log(intersects)
+        // var raycaster = new THREE.Raycaster();
+        // raycaster.set(new THREE.Vector3(xzPos.x, 0, xzPos.z), new THREE.Vector3(xzPos.x, 80000, xzPos.z));
         
       });
       console.log("finish")                     // now render scene after dem meshes are added
@@ -1705,10 +1685,31 @@ tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
   },
   onSatelliteMat: mesh => {                 // your implementation when terrain's satellite texture is obtained
       render();                             // now render scene after dem material (satellite texture) is applied
-      //REMOVE IN HTML!
-      rotateCamera(-0.5, 0, 0, 2000);
 
-  },
+      //Set Camera by Raycaster
+
+      var raycaster = new THREE.Raycaster();
+      terrain.updateMatrixWorld();
+      mesh.updateMatrixWorld();
+      raycaster.set(new THREE.Vector3(xzPos.x, 5000, xzPos.z), new THREE.Vector3(0, -1, 0));
+      var intersects = raycaster.intersectObjects(scene.children, true);
+
+      if(intersects.length > 0)
+      {
+        console.log(intersects[0], intersects[0].point)
+        camera.position.y = intersects[0].point.y + 2;
+      }
+      else
+      {
+        console.log("Could not calculate camera y position. No intersecting objects!")
+        camera.position.y = 800;
+      }
+      console.log(intersects)
+      render();
+
+      // rotateCamera(-1, 0, 0, 2000);
+
+  }
 });
 
 }
