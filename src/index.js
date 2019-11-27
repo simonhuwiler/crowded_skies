@@ -1,9 +1,17 @@
-/*
 
-  ToDo:
-  * Minify!!
+// Import modules
+var mapboxgl = require('mapbox-gl/dist/mapbox-gl.js');
+var THREE = require('three');
+const turf = require("@turf/turf")
+import TWEEN from '@tweenjs/tween.js';
+require('./docReady.js');
 
-*/
+//Import Data or Helpers
+var airways_lines = require('./data/airways.js')
+
+// Import CSS
+require('./css/main.css')
+
 
 /*
 ###############################
@@ -14,13 +22,12 @@
 */
 
 //Data by timestamp
-data_series = [];
+var data_series = [];
 
 //icao24-Object for reference
-data_icao24 = []
+var data_icao24 = []
 
 //Airways-Lines as points
-var airways_lines;
 var nearest_airways;
 
 //Loader count
@@ -30,19 +37,14 @@ var loaderCounter = 0;
 const groundAltitude = 500
 const timeSerieDeltaMin = 1;
 var llNullPoint = new LatLon(45.4, 5.8);
-var llNEPoint = new LatLon(49.052, 11.001);
+// var llNEPoint = new LatLon(49.052, 11.001);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
 
-//var llFlughafen = new LatLon(47.454588, 8.555721);
-// var llLuzern = new LatLon(47.055046, 8.305300);
-//var llZurich = new LatLon(47.372084, 8.540693);
-//var llGenf = new LatLon(46.202770, 6.148037);
-
 var llStartpunkt = llMittelpunkt;
-var controls;
 var lastTrack;
 var trackGroup;
 var trackLineMaterial;
+var xzStartpunkt;
 
 //Mapbox Variables
 var mapstart, mapend;
@@ -77,121 +79,121 @@ var chapterScrolltop = [];
 var cities = [
   {
     "id": "luzern",
-    "img": "luzern.png",
+    "img": require('./labels/luzern.png'),
     "latlon": new LatLon(47.055046, 8.305300),
     "style": "label"
   },
   {
     "id": "aarau",
-    "img": "aarau.png",
+    "img": require('./labels/aarau.png'),
     "latlon": new LatLon(47.390801, 8.046857),
     "style": "label"
   },
   {
     "id": "zurich",
-    "img": "zurich.png",
+    "img": require('./labels/zurich.png'),
     "latlon": new LatLon(47.372084, 8.540693),
     "style": "icon"
   },
   {
     "id": "winterthur",
-    "img": "winterthur.png",
+    "img": require('./labels/winterthur.png'),
     "latlon": new LatLon(47.500399, 8.724567),
     "style": "label"
   },
   {
     "id": "stgallen",
-    "img": "stgallen.png",
+    "img": require('./labels/stgallen.png'),
     "latlon": new LatLon(47.421097, 9.375037),
     "style": "label"
   },
   {
     "id": "konstanz",
-    "img": "konstanz.png",
+    "img": require('./labels/konstanz.png'),
     "latlon": new LatLon(47.663340, 9.170435),
     "style": "label"
   },
   {
     "id": "schaffhausen",
-    "img": "schaffhausen.png",
+    "img": require('./labels/schaffhausen.png'),
     "latlon": new LatLon(47.692347, 8.635310),
     "style": "label"
   },
   {
     "id": "bern",
-    "img": "bern.png",
+    "img": require('./labels/bern.png'),
     "latlon": new LatLon(46.947311, 7.447716),
     "style": "icon"
   },
   {
     "id": "biel",
-    "img": "biel.png",
+    "img": require('./labels/biel.png'),
     "latlon": new LatLon(47.137394, 7.248539),
     "style": "label"
   },
   {
     "id": "neuenburg",
-    "img": "neuenburg.png",
+    "img": require('./labels/neuenburg.png'),
     "latlon": new LatLon(46.992260, 6.910098),
     "style": "label"
   },
   {
     "id": "yverdon-les-bains",
-    "img": "yverdon-les-bains.png",
+    "img": require('./labels/yverdon-les-bains.png'),
     "latlon": new LatLon(46.783100, 6.640909),
     "style": "label"
   },
   {
     "id": "lausanne",
-    "img": "lausanne.png",
+    "img": require('./labels/lausanne.png'),
     "latlon": new LatLon(46.518534, 6.628543),
     "style": "label"
   },
   {
     "id": "genf",
-    "img": "genf.png",
+    "img": require('./labels/genf.png'),
     "latlon": new LatLon(46.202770, 6.148037),
     "style": "icon"
   },
   {
     "id": "zermatt",
-    "img": "zermatt.png",
+    "img": require('./labels/zermatt.png'),
     "latlon": new LatLon(46.018972, 7.748883),
     "style": "label"
   },
   {
     "id": "visp",
-    "img": "visp.png",
+    "img": require('./labels/visp.png'),
     "latlon": new LatLon(46.296203, 7.881271),
     "style": "label"
   },
   {
     "id": "sion",
-    "img": "sion.png",
+    "img": require('./labels/sion.png'),
     "latlon": new LatLon(46.233313, 7.359701),
     "style": "label"
   },
   {
     "id": "chur",
-    "img": "chur.png",
+    "img": require('./labels/chur.png'),
     "latlon": new LatLon(46.856793, 9.548603),
     "style": "label"
   },
   {
     "id": "stmoritz",
-    "img": "stmoritz.png",
+    "img": require('./labels/stmoritz.png'),
     "latlon": new LatLon(46.488049, 9.834390),
     "style": "label"
   },
   {
     "id": "davos",
-    "img": "davos.png",
+    "img": require('./labels/davos.png'),
     "latlon": new LatLon(46.801325, 9.827914),
     "style": "label"
   },
   {
     "id": "zug",
-    "img": "zug.png",
+    "img": require('./labels/zug.png'),
     "latlon": new LatLon(47.170165, 8.515096),
     "style": "label"
   }
@@ -214,7 +216,7 @@ var shape_switzerland = turf.polygon([[[8.3847,46.4522],[8.3669,46.4519],[8.2989
 
 ###############################
 */
-nearest_airports = [];
+var nearest_airports = [];
 var airports_features = {
   "type": "FeatureCollection",
   "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
@@ -274,10 +276,9 @@ airways_text['y100'] = {
 
 ###############################
 */
-var renderer, scene, camera, textureLoader, sky, skyMat, ground, groundTile;
+var renderer, scene, camera, textureLoader, sky, skyMat, dirLight;
 var tweenGroupPoints = new TWEEN.Group();
 var tweenGroupCameras = new TWEEN.Group();
-var rendertarget, bufferScene;
 
 /*
 ###############################
@@ -286,16 +287,9 @@ var rendertarget, bufferScene;
 
 ###############################
 */
+docReady(function() {
 
-$(document).ready( function() {
-
-  $("#test").on("click", function() {
-    camera.position.y = km(10);
-    camera.lookAt(new THREE.Vector3(camera.position.x, 0, camera.position.z));
-    render();
-  });
-
-  $(window).on("resize", function() {
+  window.addEventListener('resize', () => {
     if(camera && renderer)
     {
       calculateScrollTop();
@@ -306,52 +300,40 @@ $(document).ready( function() {
     }
   });
 
-  $("#adventuremode").on("click", function() {
-    var btn_old = $("#adventuremode");
-    var btn_new = $("#buttonReload");
+  document.getElementById("adventuremode").addEventListener("click", () => {
+    var btn_old = document.getElementById("adventuremode");
+    var btn_new = document.getElementById("buttonReload");
 
     //Set Position
-    btn_new.css("left", btn_old.offset().left);
-    btn_new.css("top", btn_old.offset().top - $(window).scrollTop());
-    btn_new.show();
+    btn_new.style.left =`${btn_old.offset().left}px`;
+    btn_new.style.top = btn_old.offset().top - $(window).scrollTop() + 'px';
+    btn_new.style.display = 'inline';
 
     //Hide old
     btn_old.css("visibility", "hidden");
 
     //Start Fadeout
-    $("#content").fadeOut();
+    //ToDo
+    //$("#content").fadeOut();
+    document.getElementById("content").style.display = 'none';
 
     //Start Animation
-    btn_new.addClass("buttonAnimation");
+    btn_new.classList.add("buttonAnimation")
+
     setTimeout(function() {
-      btn_new.css("transition", "top 1s, left 1s");
-      btn_new.css("xtransition-timing-function", "ease");
-      btn_new.css("left",0);
-      btn_new.css("top", 0);
+      btn_new.style.transition = "top 1s, left 1s";
+      btn_new.style.xtransitionTimingFunction = "ease";
+      btn_new.style.left = 0;
+      btn_new.style.top = 0;
 
       mapend.addControl(new mapboxgl.NavigationControl());
     }, 0);
 
-    $("span", btn_new).text("Einen anderen Ort wählen")
+    btn_new.querySelector("span").text = "Einen anderen Ort wählen";
 
   });
 
-  $("#buttonReload").on("click", function() {
-    location.reload();
-  });
-
-  // //Social Buttons
-  // $("#share").jsSocials({
-  //   showLabel: false,
-  //   showCount: false,
-  //   url: "https://www.blick.ch/storytelling/2018/flugrouten/",
-  //   text: "Am Schweizer Himmel: Ein dichtes Netz von Flugrouten. Wie diese Himmels-Autobahnen organisiert sind, erzählen wir Ihnen aus der Perspektive Ihres Wohnortes.",
-                               
-  //   shares: [
-  //       { share: "twitter", via: "blick_visual", hashtags: "flugrouten,skyguide,dataviz" },
-  //       "facebook"
-  //   ]
-  // });
+  document.getElementById("buttonReload").addEventListener("click", location.reload);
 
   //PrepareMapbox Start
   loaderAddCount();
@@ -371,7 +353,7 @@ $(document).ready( function() {
     //Add Routes
     mapstart.addSource('overlay', {
       "type": "image",
-      "url": "img/skybox_mapbox.png",
+      "url": require("./img/skybox_mapbox.png"),
       "coordinates": [
         [5.601455, 48.730898],
         [10.922784, 48.730898],
@@ -434,17 +416,17 @@ $(document).ready( function() {
   loaderAddCount();
   prepareTHREEJS();
 
-  //Load LineJSON
-  loaderAddCount();
-  $.getJSON("data/airways.geojson", loadAirwaysJson);
-
   //Load Data
+
   loaderAddCount();
-  $.ajax({
-    type: "GET",
-    url: "data/data.csv",
-    success: loadData
-  });
+  fetch('./data.csv')
+  .then(response => response.text())
+  .then(loadData);
+  // $.ajax({
+  //   type: "GET",
+  //   url: "data/data.csv",
+  //   success: loadData
+  // });
 
   loaderRemoveCount();
 
@@ -452,7 +434,7 @@ $(document).ready( function() {
 
 function prepareTHREEJS()
 {
-  xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
+  var xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
 
   textureLoader = new THREE.TextureLoader();
@@ -467,7 +449,7 @@ function prepareTHREEJS()
   renderer.setSize( window.innerWidth, window.innerHeight );
   renderer.alpha = true;
 
-  $("#threejs").append(renderer.domElement);
+  document.getElementById('threejs').appendChild(renderer.domElement);
 
   //Init Lights
 
@@ -476,44 +458,6 @@ function prepareTHREEJS()
   
   dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
   scene.add( dirLight ); //xxx
-
-  //Add ground
-  //Not needed anymore because of terrain
-  /*
-  var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
-  var groundMat = new THREE.MeshPhongMaterial( { color: 0xf2f2f1, specular: 0xf2f2f1 });
-  
-  groundMat.color.setHex(0xf2f2f1);
-
-  ground = new THREE.Mesh( groundGeo, groundMat );
-  ground.rotation.x = - Math.PI / 2;
-  ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
-  ground.receiveShadow = true;
-  scene.add( ground );
-  */
-
-  //Map Tile
-  //Not used anymore because of terrain
-  /*
-  var repeat = 4096;
-  groundTileGeo = new THREE.PlaneBufferGeometry(4096, 4096);
-
-  var texture = textureLoader.load( "img/ground.jpg" );
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set( repeat, repeat );
-
-  var groundTileMat = new THREE.MeshPhongMaterial({
-    map: texture
-  });
-  groundTileMat.side = THREE.DoubleSide;
-
-  groundTile = new THREE.Mesh( groundTileGeo, groundTileMat );
-  groundTile.rotation.x = - Math.PI / 2;
-  groundTile.position.set(xzMittelpunkt.x, groundAltitude + 0.1, xzMittelpunkt.z);
-  groundTile.receiveShadow = true;
-  scene.add( groundTile );
-  */
 
   //Add Skydom
   var vertexShader = document.getElementById( 'vertexShader' ).textContent;
@@ -536,15 +480,15 @@ function prepareTHREEJS()
   scene.add(sky);
 
   //Add Skymap
-  var skyOverlayTexture = new textureLoader.load( "img/skybox.png" );
+  var skyOverlayTexture = new textureLoader.load(require("./img/skybox.png"));
   skyOverlayTexture.wrapS = THREE.RepeatWrapping; 
   skyOverlayTexture.wrapT = THREE.RepeatWrapping;
   skyOverlayTexture.repeat.set(1,1); 
 
   var skyOverlayGeo = new THREE.PlaneBufferGeometry(km(406), km(406));
-  skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
+  var skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
   skyOverlayMaterial.transparent = true;
-  skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
+  var skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
   skyOverlayPlane.material.depthTest = true;
   skyOverlayPlane.material.side = THREE.DoubleSide;
   skyOverlayPlane.position.set(xzMittelpunkt.x, km(30), xzMittelpunkt.z);
@@ -555,10 +499,10 @@ function prepareTHREEJS()
   //Add Fix Points (Cities)
   cities.forEach(function(e) {
     //Calculate XZ
-    xzE = latLon2XY(llNullPoint, e.latlon);
+    let xzE = latLon2XY(llNullPoint, e.latlon);
 
     //Create Sprite
-    var spriteMap = textureLoader.load( "labels/" + e.img );
+    var spriteMap = textureLoader.load( e.img );
     var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, side:THREE.DoubleSide, transparent: false, color: 0xffffff  } );
     e.sprite = new THREE.Sprite( spriteMaterial );
     var e_scale = 1;
@@ -694,9 +638,6 @@ function userPositionSelected()
 
   //Calculate nearest Airports
   nearest_airports = getNearestAirport(llStartpunkt, 2);
-
-  //Copy Airport-section in HTML
-  //$(".chapter_airport").clone().insertAfter(".chapter_airport");
 
   //Prepare Airport 1
   var ap1 = $("#chapter_airport_1 .chapter_content .airport_" + nearest_airports[0].properties.name + " span");
@@ -862,14 +803,6 @@ function getNewCameraRotation(_vector3)
     return {x: newRotationX, y: newRotationY, z: newRotationZ};
 }
 
-function loadAirwaysJson(data)
-{
-  airways_lines = data;
-
-  var r = getNearestLines(new LatLon(47.564, 8.735), 3);
-  loaderRemoveCount();
-}
-
 function getNearestLines(_source, _max)
 {
   //Copy Geojson
@@ -955,7 +888,6 @@ function getNearestAirport(_source, _max)
 
 function loadData(_data)
 {
-
   //Parse CSV
   var allTextLines = _data.split(/\r\n|\n/);
   var headers = allTextLines[0].split(',');
@@ -974,7 +906,7 @@ function loadData(_data)
   }
 
   //Load planetexture
-  var spriteMap = new THREE.TextureLoader().load( "img/plane.png" ); //TODO
+  var spriteMap = new THREE.TextureLoader().load(require("./img/plane.png")); //TODO
 
   //Create Data Serie
   lines.forEach(function(d) {
@@ -1023,11 +955,6 @@ function loadData(_data)
   //Create Three-Objects
   renderTracks();
   loaderRemoveCount();
-
-  // //ToDo XXX Remove
-  // loaderRemoveCount();
-  // userPositionSelected();
-  // $("#mapstart").hide();
 }
 
 function renderTracks()
@@ -1037,7 +964,7 @@ function renderTracks()
   trackLineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff } );
 
   //Loop all icao24
-  for(icao24 in data_icao24)
+  for(var icao24 in data_icao24)
   {
     icao24 = data_icao24[icao24];
     
@@ -1062,27 +989,6 @@ function renderTracks()
   lastTrack.setHours(0);
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
-}
-
-function getCity(_id)
-{
-  var found = false;
-  cities.forEach(function(e) {
-    if(e.id == _id)
-    {
-      r = e;
-      found = true;
-      return false;
-    }
-  });
-
-  if(found)
-    return r;
-
-  if(!found)
-  {
-    throw _id + " nicht gefunden";
-  }
 }
 
 //These both are loader functions. When an asynchron task is startet, loadercount is increased.
@@ -1284,16 +1190,18 @@ function pointInShape()
 
 function enableStart()
 {
-  $("#setPosition").addClass("btn_n");
-  $("#setPosition").removeClass("btn_n_inactive");
-  $("#setPosition").on("click", userPositionSelected);
+  var setPosition = document.getElementById('setPosition');
+  setPosition.classList.add("btn_n");
+  setPosition.classList.remove("btn_n_inactive");
+  setPosition.addEventListener("click", userPositionSelected);
 }
 
 function disableStart()
 {
-  $("#setPosition").addClass("btn_n_inactive");
-  $("#setPosition").removeClass("btn_n");
-  $("#setPosition").off("click");
+  var setPosition = document.getElementById('setPosition');
+  setPosition.classList.add("btn_n_inactive");
+  setPosition.classList.remove.removeClass("btn_n");
+  setPosition.removeEventListener("click");
 }
 
 /*
@@ -1595,8 +1503,8 @@ function latLon2XY(_nullPoint, _point)
   //Needs: <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnNRaRyTgYY5rP_RIvtz8W09p46Qx-Dzw&libraries=geometry"></script>
   */
 
-  distanceX = distance(_nullPoint, new LatLon(_nullPoint.lat, _point.lon));
-  distanceZ = distance(_nullPoint, new LatLon(_point.lat, _nullPoint.lon));
+  let distanceX = distance(_nullPoint, new LatLon(_nullPoint.lat, _point.lon));
+  let distanceZ = distance(_nullPoint, new LatLon(_point.lat, _nullPoint.lon));
 
   return new xz(Math.trunc(distanceX), Math.trunc(distanceZ) * -1); //z umkehren, weil ThreeJS verkehrt rechnet...
 }
