@@ -1,0 +1,61 @@
+<html>
+  <head>
+
+      <style>
+          body { margin: 0; }
+          canvas { width: 100%; height: 100% }
+        </style>
+
+  </head>
+  <body>
+    
+    <script src="three.min.js"></script>
+<script src="three-geo.min.js"></script>
+
+
+
+
+<script>
+
+const tgeo = new ThreeGeo({
+    tokenMapbox: 'pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg',                  // <---- set your Mapbox API token here
+});
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+var cube = new THREE.Mesh( geometry, material );
+scene.add( cube );
+
+camera.position.z = 5;
+
+renderer.render( scene, camera );
+
+function render()
+{
+  renderer.render( scene, camera );
+
+}
+
+// params: [lat, lng], terrain's radius (km), satellite zoom resolution, callbacks
+// Beware the value of radius; for zoom 12, radius > 5.0 (km) could trigger huge number of tile API calls!!
+tgeo.getTerrain([46.5763, 7.9904], 5.0, 8, {
+    onRgbDem: meshes => {                     // your implementation when the terrain's geometry is obtained
+        meshes.forEach(mesh => scene.add(mesh));
+        render();                             // now render scene after dem meshes are added
+    },
+    onSatelliteMat: mesh => {                 // your implementation when terrain's satellite texture is obtained
+        render();                             // now render scene after dem material (satellite texture) is applied
+        console.log(scene)
+    },
+});
+</script>
+
+  </body>
+</html>

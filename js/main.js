@@ -34,11 +34,12 @@ var llNEPoint = new LatLon(49.052, 11.001);
 var llMittelpunkt = new LatLon(46.943366, 8.311583);
 
 //var llFlughafen = new LatLon(47.454588, 8.555721);
-//var llLuzern = new LatLon(47.055046, 8.305300);
+// var llLuzern = new LatLon(47.055046, 8.305300);
 //var llZurich = new LatLon(47.372084, 8.540693);
 //var llGenf = new LatLon(46.202770, 6.148037);
 
 var llStartpunkt = llMittelpunkt;
+// var llStartpunkt = llLuzern;
 var controls;
 var lastTrack;
 var trackGroup;
@@ -447,13 +448,16 @@ $(document).ready( function() {
   });
 
   loaderRemoveCount();
+
 });
 
 function prepareTHREEJS()
 {
   xzMittelpunkt = latLon2XY(llNullPoint, llMittelpunkt);
   xzStartpunkt = latLon2XY(llNullPoint, llStartpunkt);
-  //xzLuzern = latLon2XY(llNullPoint, llLuzern);
+
+  //XXX ToDo Remove
+  // xzLuzern = latLon2XY(llNullPoint, llLuzern);
 
   textureLoader = new THREE.TextureLoader();
 
@@ -634,6 +638,7 @@ function animateTween()
 
 function userPositionSelected()
 {
+  console.log("ru")
   
   //Eigener Thread, damit es angezeigt wird
   setTimeout(function() {
@@ -1016,6 +1021,12 @@ function loadData(_data)
   //Create Three-Objects
   renderTracks();
   loaderRemoveCount();
+
+  //ToDo XXX Remove
+  loaderRemoveCount();
+  userPositionSelected();
+  $("#mapstart").hide();
+  loadTerrain();
 }
 
 function renderTracks()
@@ -1051,85 +1062,6 @@ function renderTracks()
   lastTrack.setMinutes(0);
   lastTrack.setSeconds(0);
 }
-
-/*
-//Original. Objekte erzeugen, aber noch nicht zeichnen.
-function renderTracks()
-{
-  //Loop all icao24
-  for(icao24 in data_icao24)
-  {
-    icao24 = data_icao24[icao24];
-    
-    //Add Mesh
-    icao24.geometry = new THREE.Geometry();
-    icao24.geometry.vertices.needsUpdate = true;
-    icao24.geometry.needsUpdate = true;
-
-    var l_material = new THREE.LineBasicMaterial( { color: icao24.color } );
-    icao24.meshline = new THREE.Line( icao24.geometry, l_material );
-
-    //Add vertices for each point. But add always the first point! Its not possible, to add vertices after creation!
-    for(var i = 0; i <= icao24.series.length - 1; i++)
-    {
-      var vector = new THREE.Vector3(icao24.series[0].xz.x, km(10), icao24.series[0].xz.z)
-      icao24.series[i].vertice = vector;
-      icao24.geometry.vertices.push(vector);
-    }
-    scene.add(icao24.meshline);
-  }
-
-  //Set lastTrack-Date
-  lastTrack = new Date();
-  lastTrack.setHours(0);
-  lastTrack.setMinutes(0);
-  lastTrack.setSeconds(0);
-}
-
-function renderTimeSerie(_timestamp)
-{
-  lastTrack = _timestamp;
-
-  //Format Timestring
-  timestampAsString = ('0' + _timestamp.getHours()).substr(-2) + ":" + ('0' + _timestamp.getMinutes()).substr(-2)  + ":00";
-
-  //Load timestamp with all points in it
-  timestamp = data_series[timestampAsString];
-  for(serie in timestamp)
-  {
-    serie = timestamp[serie];
-
-    //Update Vertice-Reference and pray. Attention: All "invisible" vertices must be updated with the current one. Or you get a triangle. Really, do it. Dont ask!
-    var updateIt = false;
-    serie.icao24.series.forEach(function(uSerie) {
-      if(uSerie.xz.x == serie.xz.x && uSerie.xz.z == serie.xz.z)
-        updateIt = true;
-
-      if(updateIt)
-      {
-        uSerie.vertice.x = serie.xz.x;
-        uSerie.vertice.y = serie.altitude;
-        uSerie.vertice.z = serie.xz.z;
-      }
-    });
-
-    serie.icao24.geometry.verticesNeedUpdate = true;
-  }
-}
-
-*/
-
-/*
-function getRandomColor() {
-  var letters = '0123456789abcdef';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-
-  return color;
-}
-*/
 
 function getCity(_id)
 {
@@ -1334,48 +1266,6 @@ function resumeTweenTracks()
   animationCanRun = true;
   createTweensAndStart(lastTrack);
 }
-
-/*
-function animateIntern()
-{
-
-  if(lastTrack.getHours() <= 22)
-  {
-    requestAnimationFrame( animateIntern );
-    //Go for animation!
-
-  }
-  else
-  {
-    console.log("Zeit abgelaufen");
-  }
-
-  while(doIt)
-  {
-    lastTrack.setMinutes(lastTrack.getMinutes() + 1);
-    renderTimeSerie(lastTrack);
-    
-    if(lastTrack.getHours() == 22)
-      doIt = false;
-  }
-  renderer.render( scene, camera );
-  console.log("fertig");
-
-
-
-  delta = clock.getDelta();
-  renderer.render( scene, camera );
-  console.log(delta);
-}
-
-function animate() {
-
-  requestAnimationFrame( animate );
-  controls.update();
-
-  renderer.render( scene, camera );
-}
-*/
 
 function render()
 {
@@ -1731,3 +1621,94 @@ function getTileURL(lat, lon, zoom) {
   return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
 }
 */
+
+
+
+
+
+/********************* TERRAIN *****/
+function assembleUrl(img, coords){
+
+  var tileset = img ? 'mapbox.streets-satellite' : 'mapbox.terrain-rgb';//
+  var res = img ? '@2x.png' :'@2x.pngraw';
+
+  //domain sharding
+  var serverIndex = 2*(coords[1]%2)+coords[2]%2
+  var server = ['a','b','c','d'][serverIndex]
+  //return 'sample.png'
+  return 'https://'+server+'.tiles.mapbox.com/v4/'+tileset+'/'+slashify(coords)+res+'?access_token=pk.eyJ1IjoicGV0ZXJxbGl1IiwiYSI6ImNqdHJqdG92OTBkNTg0M3BsNDY0d3NudWcifQ.0z4ov_viFE-yBMSijQpOhQ'
+}
+
+function loadTerrain(llPos)
+{
+  llPos = llStartpunkt;
+  var xzPos = latLon2XY(llNullPoint, llPos);
+
+  const tgeo = new ThreeGeo({
+    tokenMapbox: mapboxgl.accessToken
+  });
+  console.log(llPos, xzPos)
+
+  const radius = 2;
+//https://github.com/w3reality/three-geo
+tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
+  onRgbDem: meshes => {                     // your implementation when the terrain's geometry is obtained
+      meshes.forEach(mesh => {
+        
+        //Calc Scale Factor
+        var box = new THREE.Box3().setFromObject( mesh )
+        const scaleFactor = radius * 1000 / box.getSize().x
+        mesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
+        
+        //Rotate Mesh
+        mesh.rotation.x = Math.PI / 2;
+        
+        //Set Position
+        // mesh.position.set(xzPos.x + box.getSize().x / 2, groundAltitude - 2, xzPos.z + box.getSize().z / 2);
+        mesh.position.set(xzPos.x, groundAltitude - 2, xzPos.z);
+
+        //Add Mesh
+        scene.add(mesh)
+        render();
+        //Find Intersect
+        var raycaster = new THREE.Raycaster();
+        raycaster.set(new THREE.Vector3(xzPos.x, 0, xzPos.z), new THREE.Vector3(xzPos.x, 80000, xzPos.z));
+        // raycaster.set(new THREE.Vector3(xzPos.x, 8000, xzPos.z), new THREE.Vector3(xzPos.x, 0, xzPos.z));
+        var intersects = raycaster.intersectObject(mesh);
+        if(intersects.length > 0)
+        {
+          camera.position.y = intersects[0].point.y + mesh.position.y + 2;
+          console.log(camera.position.y)
+        }
+        else
+        {
+          console.log("Could not calculate camera y position. No intersecting objects!")
+        }
+        console.log(intersects)
+        
+      });
+      console.log("finish")                     // now render scene after dem meshes are added
+      // camera.position.y = 10;
+      groundTile.visible = false;
+      ground.visible = false;
+      // camera.rotation.x = 0;
+
+      var light = new THREE.AmbientLight( 0xffffff, 5000000 ); // soft white light
+      scene.add( light );
+
+
+      var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+      scene.add(directionalLight)
+
+
+      render();        
+  },
+  onSatelliteMat: mesh => {                 // your implementation when terrain's satellite texture is obtained
+      render();                             // now render scene after dem material (satellite texture) is applied
+      //REMOVE IN HTML!
+      rotateCamera(-0.5, 0, 0, 2000);
+
+  },
+});
+
+}
