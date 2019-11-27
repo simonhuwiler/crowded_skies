@@ -474,17 +474,15 @@ function prepareTHREEJS()
   //Add Sun
   dirLight = new THREE.DirectionalLight( 0xffffff, 0.2 );
   
-  //dirLight.color.setHSL( 0.1, 1, 0.55 );
   dirLight.position.set(xzMittelpunkt.x, km(1000), xzMittelpunkt.z);
   scene.add( dirLight ); //xxx
 
   //Add ground
+  //Not needed anymore because of terrain
+  /*
   var groundGeo = new THREE.PlaneBufferGeometry( km(100), km(100) );
-  //var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 });
   var groundMat = new THREE.MeshPhongMaterial( { color: 0xf2f2f1, specular: 0xf2f2f1 });
-
   
-  //groundMat.color.setHSL( 0.095, 1, 0.75 );
   groundMat.color.setHex(0xf2f2f1);
 
   ground = new THREE.Mesh( groundGeo, groundMat );
@@ -492,12 +490,13 @@ function prepareTHREEJS()
   ground.position.set(xzMittelpunkt.x, groundAltitude, xzMittelpunkt.z);
   ground.receiveShadow = true;
   scene.add( ground );
+  */
 
   //Map Tile
+  //Not used anymore because of terrain
+  /*
   var repeat = 4096;
   groundTileGeo = new THREE.PlaneBufferGeometry(4096, 4096);
-  //var groundTileMat = new THREE.MeshPhongMaterial( { color: 0xffcc00, specular: 0xffcc00 });
-
 
   var texture = textureLoader.load( "img/ground.jpg" );
   texture.wrapS = THREE.RepeatWrapping;
@@ -514,6 +513,7 @@ function prepareTHREEJS()
   groundTile.position.set(xzMittelpunkt.x, groundAltitude + 0.1, xzMittelpunkt.z);
   groundTile.receiveShadow = true;
   scene.add( groundTile );
+  */
 
   //Add Skydom
   var vertexShader = document.getElementById( 'vertexShader' ).textContent;
@@ -545,13 +545,12 @@ function prepareTHREEJS()
   skyOverlayMaterial = new THREE.MeshBasicMaterial({ map : skyOverlayTexture });
   skyOverlayMaterial.transparent = true;
   skyOverlayPlane = new THREE.Mesh(skyOverlayGeo, skyOverlayMaterial);
-  skyOverlayPlane.material.depthTest = false;
+  skyOverlayPlane.material.depthTest = true;
   skyOverlayPlane.material.side = THREE.DoubleSide;
   skyOverlayPlane.position.set(xzMittelpunkt.x, km(30), xzMittelpunkt.z);
   skyOverlayPlane.rotation.x = - Math.PI / 2;
   skyOverlayPlane.receiveShadow = false;
   scene.add( skyOverlayPlane );
-
 
   //Add Fix Points (Cities)
   cities.forEach(function(e) {
@@ -634,7 +633,6 @@ function animateTween()
 
 function userPositionSelected()
 {
-  
   //Eigener Thread, damit es angezeigt wird
   setTimeout(function() {
     //Change UI
@@ -655,8 +653,20 @@ function userPositionSelected()
 
   //Set Startpoint and make a first Render
   llStartpunkt = new LatLon(mapstart.getCenter().lat, mapstart.getCenter().lng);
+
   setCameraPosition(llStartpunkt);
-  //camera.rotation.x = 0.9;
+
+  //Check if remove any city label
+  const point_from = turf.point([llStartpunkt.lon, llStartpunkt.lat]);
+  for(var i = 0; i < cities.length; i++)
+  {
+    var dist = turf.distance(point_from, turf.point([cities[i].latlon.lon, cities[i].latlon.lat]), {units: 'kilometers'})
+    if(dist < 15)
+    {
+      cities[i].sprite.visible = false;
+    }
+  }
+
   render();
 
   //Get Elevation Map
@@ -815,16 +825,9 @@ function setCameraPosition(_llStart)
 {
   xzStartpunkt = latLon2XY(llNullPoint, _llStart);
   camera.position.set(xzStartpunkt.x, groundAltitude + 2, xzStartpunkt.z);
-  //tmpMesh.position.set(xzStartpunkt.x, groundAltitude + 500, xzStartpunkt.z);
-  ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
-
-  groundTile.position.set(xzStartpunkt.x, groundAltitude + 0.5, xzStartpunkt.z);
-  /*
-  var url = getTileURL(llStartpunkt.lat, llStartpunkt.lon, 15);
-  groundTile.material.map = textureLoader.load( url );
-  groundTile.needsUpdate = true;
-  */
- 
+  //Not needed anymore because of terrain
+  //ground.position.set(xzStartpunkt.x, groundAltitude, xzStartpunkt.z);
+  //groundTile.position.set(xzStartpunkt.x, groundAltitude + 0.5, xzStartpunkt.z);
 }
 
 
@@ -1147,16 +1150,15 @@ function createTweensAndStart(_serie)
     skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r + colorRatio, skyMat.uniforms.bottomColor.value.g + colorRatio, skyMat.uniforms.bottomColor.value.b + colorRatio);
 
     //Change Light Color (0.2 -> 0.6)
-    dirLight.intensity += 0.4 * colorRatio;
+    dirLight.intensity += 0.1 * colorRatio;
   }
   else if(_serie.getHours() >= 19 && _serie.getHours() <= 20)
   {
     skyMat.uniforms.bottomColor.value.setRGB(skyMat.uniforms.bottomColor.value.r - colorRatio, skyMat.uniforms.bottomColor.value.g - colorRatio, skyMat.uniforms.bottomColor.value.b - colorRatio);
     
     //Change Light Color (0.6 -> 0.2)
-    dirLight.intensity -= 0.4 * colorRatio;
+    dirLight.intensity -= 0.1 * colorRatio;
   }
-
   
   //First check, if timestampNext available. If not, we reached the end and are still alive
   if(timestampNext)
@@ -1600,30 +1602,6 @@ function latLon2XY(_nullPoint, _point)
 }
 
 
-
-/**** LATLONG TO XYZ ****/
-/*
-Number.prototype.toRad = function() {
-  return this * Math.PI / 180;
-}
-
-function getTileURL(lat, lon, zoom) {
-  var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
-  var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
-  //return {x: xtile, y: ytile, z: zoom};
-  //return "https://api.mapbox.com/styles/v1/blick-storytelling/cjg6dbhus2vf32sp53s358gud/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg"
-  //return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
-  //return "https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/256/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
-  //return "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
-  //return "https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
-  return "https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/512/" + zoom + "/" + xtile + "/" + ytile + "?access_token=pk.eyJ1IjoiYmxpY2stc3Rvcnl0ZWxsaW5nIiwiYSI6ImNpcjNiaWFsZjAwMThpM25xMzIxcXM1bzcifQ.XJat3GcYrmg9o-0oAaz3kg";
-}
-*/
-
-
-
-
-
 /********************* TERRAIN *****/
 
 function loadTerrain(llPos)
@@ -1634,58 +1612,40 @@ function loadTerrain(llPos)
     tokenMapbox: mapboxgl.accessToken
   });
 
-  const radius = 2;
-//https://github.com/w3reality/three-geo
+  const radius = 3;
+  //https://github.com/w3reality/three-geo
 
-var terrain = null;
-tgeo.getTerrain([llPos.lat, llPos.lon], radius, 11, {
-  onRgbDem: meshes => {                     // your implementation when the terrain's geometry is obtained
-      meshes.forEach(mesh => {
-        terrain = mesh;
-        
-        //Calc Scale Factor
-        var box = new THREE.Box3().setFromObject( mesh )
-        const scaleFactor = radius * 1000 / box.getSize().x
-        mesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
-        
-        //Rotate Mesh
-        mesh.rotation.x = Math.PI / -2;
-        
-        //Set Position
-        // mesh.position.set(xzPos.x + box.getSize().x / 2, groundAltitude - 2, xzPos.z + box.getSize().z / 2);
-        mesh.position.set(xzPos.x, groundAltitude - 2, xzPos.z);
+  var terrain = null;
 
+  tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
+    onRgbDem: meshes => {
 
-        // mesh.DoubleSide = true;
-        // mesh.doubleSide = true;
-        // mesh.updateMatrixWorld() 
-        //Add Mesh
-        scene.add(mesh)
-        render();
-        //Find Intersect
-        // var raycaster = new THREE.Raycaster();
-        // raycaster.set(new THREE.Vector3(xzPos.x, 0, xzPos.z), new THREE.Vector3(xzPos.x, 80000, xzPos.z));
-        
-      });
-      console.log("finish")                     // now render scene after dem meshes are added
-      // camera.position.y = 10;
-      groundTile.visible = false;
-      ground.visible = false;
-      // camera.rotation.x = 0;
+        meshes.forEach(mesh => {
+          terrain = mesh;
+          
+          //Calc Scale Factor
+          var box = new THREE.Box3().setFromObject( mesh )
+          const scaleFactor = radius * 1000 / box.getSize().x
+          mesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
+          
+          //Rotate Mesh
+          mesh.rotation.x = Math.PI / -2;
+          
+          //Set Position
+          mesh.position.set(xzPos.x, groundAltitude - 2, xzPos.z);
 
-      var light = new THREE.AmbientLight( 0xffffff, 5000000 ); // soft white light
-      scene.add( light );
+          //Add Mesh
+          scene.add(mesh)
+          render();
+          
+        });
 
 
-      var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-      scene.add(directionalLight)
+        render();        
+    },
+    onSatelliteMat: mesh => {
 
-
-      render();        
-  },
-  onSatelliteMat: mesh => {                 // your implementation when terrain's satellite texture is obtained
-      render();                             // now render scene after dem material (satellite texture) is applied
-
+      render();
       //Set Camera by Raycaster
 
       var raycaster = new THREE.Raycaster();
@@ -1696,7 +1656,6 @@ tgeo.getTerrain([llPos.lat, llPos.lon], radius, 11, {
 
       if(intersects.length > 0)
       {
-        console.log(intersects[0], intersects[0].point)
         camera.position.y = intersects[0].point.y + 2;
       }
       else
@@ -1704,12 +1663,9 @@ tgeo.getTerrain([llPos.lat, llPos.lon], radius, 11, {
         console.log("Could not calculate camera y position. No intersecting objects!")
         camera.position.y = 800;
       }
-      console.log(intersects)
       render();
 
-      // rotateCamera(-1, 0, 0, 2000);
-
-  }
-});
+    }
+  });
 
 }
