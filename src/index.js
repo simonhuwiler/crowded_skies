@@ -474,7 +474,7 @@ function prepareTHREEJS()
   uniforms.topColor.value = new THREE.Color(0x0c4fd7);
   scene.fog.color.copy( uniforms.bottomColor.value );
 
-  var skyGeo = new THREE.SphereBufferGeometry( km(300), 32, 15 );
+  var skyGeo = new THREE.SphereGeometry( km(300), 32, 15 );
   skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } ); //xxx
 
   sky = new THREE.Mesh( skyGeo, skyMat );
@@ -1206,15 +1206,11 @@ function chapter_routesonmapbox()
 function chapter_startTHREE()
 {
   document.getElementById('scroller').style.display = 'none';
-  //ToDo
-  // $("#scroller").fadeOut();
 
   //Register event after flying
   mapstart.once('moveend', function() {
     //Animation ended
     document.getElementById('mapstart').style.display = 'none';
-    //Todo
-    // $("#mapstart").fadeOut();
     render();
     if(bearing == 0)
     {
@@ -1404,7 +1400,6 @@ function chapter_load_heatmap()
 ###############################
 */
 function km(_km)
-
 {
   return _km * 1000;
 }
@@ -1479,13 +1474,10 @@ function latLon2XY(_nullPoint, _point)
 
 
 /********************* TERRAIN *****/
-var terrain;
 function loadTerrain(llPos)
 {
-  console.log("TERRAIN")
   var xzPos = latLon2XY(llNullPoint, llPos);
 
-  console.log(llPos, xzPos)
   const tgeo = new ThreeGeo({
     tokenMapbox: mapboxgl.accessToken
   });
@@ -1493,27 +1485,14 @@ function loadTerrain(llPos)
   const radius = 5;
   //https://github.com/w3reality/three-geo
 
-  document.getElementById('test').addEventListener('click', () => {
-    console.log(camera.position)
-    console.log(terrain.position)
-    terrain.needsUpdate = true;
-    camera.position.set(terrain.position.x + 100, terrain.position.y+ 100, terrain.position.z+100)
-    camera.lookAt(terrain)
-    render();
-  })
-  var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-  scene.add( light );
-
-
   tgeo.getTerrain([llPos.lat, llPos.lon], radius, 10, {
     onRgbDem: meshes => {
         meshes.forEach(mesh => {
-          terrain = mesh;
           //Calc Scale Factor
           var box = new THREE.Box3().setFromObject( mesh )
           var target = new THREE.Vector3();
           box.getSize(target)
-          const scaleFactor = radius * 1000 / target.x
+          const scaleFactor = Math.round(radius * 1000 / target.x);
           mesh.scale.set(scaleFactor, scaleFactor, scaleFactor)
           
           //Rotate Mesh
@@ -1525,8 +1504,6 @@ function loadTerrain(llPos)
           //Add Mesh
           scene.add(mesh)
           
-          mesh.updateMatrixWorld();
-          
         });
 
 
@@ -1534,10 +1511,6 @@ function loadTerrain(llPos)
     },
     onSatelliteMat: mesh => {
 
-      mesh.material.wireframe = true;
-
-      render();
-      console.log("mesh")
       //Set Camera by Raycaster
       var raycaster = new THREE.Raycaster();
       mesh.updateMatrixWorld();
@@ -1547,7 +1520,6 @@ function loadTerrain(llPos)
       if(intersects.length > 0)
       {
         camera.position.y = intersects[0].point.y + 2;
-        console.log(intersects[0].point.y)
       }
       else
       {
