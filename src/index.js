@@ -310,16 +310,19 @@ docReady(function() {
     var btn_new = document.getElementById("buttonReload");
 
     //Set Position
-    btn_new.style.left =`${btn_old.offset().left}px`;
-    btn_new.style.top = btn_old.offset().top - window.scrollTop + 'px';
+    var bodyRect = document.body.getBoundingClientRect(),
+    elemRect = btn_old.getBoundingClientRect(),
+    offsetTop = elemRect.top - bodyRect.top,
+    offsetLeft = elemRect.left - bodyRect.left;
+
+    btn_new.style.left =`${offsetLeft}px`;
+    btn_new.style.top = `${offsetTop - window.scrollTop}px`;
     btn_new.style.display = 'inline';
 
     //Hide old
-    btn_old.css("visibility", "hidden");
+    btn_old.style.visibility = "hidden";
 
-    //Start Fadeout
-    //ToDo
-    //$("#content").fadeOut();
+    //Hide
     document.getElementById("content").style.display = 'none';
 
     //Start Animation
@@ -334,11 +337,11 @@ docReady(function() {
       mapend.addControl(new mapboxgl.NavigationControl());
     }, 0);
 
-    btn_new.querySelector("span").text = "Einen anderen Ort wählen";
+    btn_new.querySelector("span").innerHTML = "Einen anderen Ort wählen";
 
   });
 
-  document.getElementById("buttonReload").addEventListener("click", location.reload);
+  document.getElementById("buttonReload").addEventListener("click", () => location.reload());
 
   //PrepareMapbox Start
   loaderAddCount();
@@ -1506,11 +1509,9 @@ function loadTerrain(llPos)
           
         });
 
-
         render();        
     },
     onSatelliteMat: mesh => {
-
       //Set Camera by Raycaster
       var raycaster = new THREE.Raycaster();
       mesh.updateMatrixWorld();
