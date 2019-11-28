@@ -15,6 +15,17 @@ body
   }
 }
 
+.beta
+{
+  color: grey;
+  font-size: 0.8em;
+}
+
+.beta a, .beta a:hover, .beta a:visited
+{
+  color: rgb(82, 82, 82);
+}
+
 .map
 {
   position: fixed;
